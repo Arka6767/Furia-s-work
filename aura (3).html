@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Aura" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#f8f9fc" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%234338ca'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='90' y='118' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='96' fill='%23ffffff'%3Ea%3C/text%3E%3C/svg%3E" />
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Aura","short_name":"Aura","start_url":".","display":"standalone","background_color":"#f8f9fc","theme_color":"#f8f9fc"}' />
+  <meta name="description" content="Aura — личный дневник атмосферы: фото, короткие видео, музыка и живой голос в единой визуальной системе 4:5." />
+  <meta property="og:title" content="Aura — Дневник атмосферы" />
+  <meta property="og:description" content="Сохраняйте не только кадры, но и ощущение дня: текст, фото, видео, музыка и живой голос." />
+  <title>Aura — Дневник атмосферы</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --bg-app: #f8f9fc;
+      --bg-card: #ffffff;
+      --bg-fill: #eef0f8;
+      --bg-fill-soft: #f1f3fa;
+      --ink: #1e2235;
+      --ink-2: #5b627a;
+      --ink-3: #8a91a8;
+      --sep: rgba(79, 70, 229, 0.10);
+      --accent: #4f46e5;
+      --accent-grad: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      --accent-fg: #ffffff;
+      --brand-blue: #4f46e5;
+      --spotify: #1db954;
+      --bar-bg: rgba(255, 255, 255, 0.86);
+      --mesh-a: rgba(129, 140, 248, 0.18);
+      --mesh-b: rgba(251, 191, 36, 0.13);
+    }
+    html[data-theme="dark"] {
+      --bg-app: #0f1221;
+      --bg-card: #181c30;
+      --bg-fill: #232842;
+      --bg-fill-soft: #20253d;
+      --ink: #f3f5fc;
+      --ink-2: #adb5d0;
+      --ink-3: #7f88a8;
+      --sep: rgba(165, 180, 252, 0.13);
+      --accent: #6366f1;
+      --accent-grad: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+      --accent-fg: #ffffff;
+      --brand-blue: #818cf8;
+      --bar-bg: rgba(18, 21, 38, 0.88);
+      --mesh-a: rgba(99, 102, 241, 0.18);
+      --mesh-b: rgba(251, 191, 36, 0.08);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0;
+      background-color: var(--bg-app);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    .font-serif-title { font-family: 'New York', 'Iowan Old Style', Georgia, serif; }
+    .font-mono-num { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+    .app-dvh { min-height: 100vh; min-height: 100dvh; }
+    .aspect-4-5 { aspect-ratio: 4 / 5; }
+
+    /* Subtle iOS Apple-Journal Ambient Background Mesh */
+    .ambient-mesh {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+      background:
+        radial-gradient(620px 420px at 90% -6%, var(--mesh-a), transparent 65%),
+        radial-gradient(540px 420px at -8% 92%, var(--mesh-b), transparent 65%);
+    }
+
+    /* Native Surface Helpers */
+    .ios-card {
+      background-color: var(--bg-card);
+      border: 0.5px solid var(--sep);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 8px 24px -12px rgba(0, 0, 0, 0.06);
+    }
+    .ios-fill { background-color: var(--bg-fill-soft); }
+    .ios-sep { border-color: var(--sep); }
+    .ios-text { color: var(--ink); }
+    .ios-sub { color: var(--ink-2); }
+    .ios-muted { color: var(--ink-3); }
+    .ios-btn-primary { background: var(--accent-grad); color: var(--accent-fg); box-shadow: 0 6px 18px -6px rgba(79, 70, 229, 0.48); }
+    .ios-bar {
+      background-color: var(--bar-bg);
+      backdrop-filter: saturate(180%) blur(24px);
+      -webkit-backdrop-filter: saturate(180%) blur(24px);
+    }
+    .ios-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 13px 16px;
+      transition: background-color 0.15s ease;
+    }
+    .ios-row:active { background-color: var(--bg-fill-soft); }
+
+    .safe-top {
+      padding-top: max(0.75rem, env(safe-area-inset-top));
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+    .safe-bottom {
+      padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+      padding-left: max(0.75rem, env(safe-area-inset-left));
+      padding-right: max(0.75rem, env(safe-area-inset-right));
+    }
+    .press-scale { transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease; }
+    .press-scale:active { transform: scale(0.97); opacity: 0.88; }
+    .sheet-up { animation: sheetIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    @keyframes sheetIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes tutFloatCard {
+      0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
+      50% { transform: translateY(-6px) rotate(1.5deg); }
+    }
+    @keyframes tutEqBar {
+      0%, 100% { transform: scaleY(0.28); }
+      50% { transform: scaleY(1); }
+    }
+    @keyframes tutPulseRing {
+      0% { transform: scale(0.85); opacity: 0.75; }
+      100% { transform: scale(1.65); opacity: 0; }
+    }
+    @keyframes tutScanLine {
+      0%, 100% { transform: translateX(-100%); }
+      50% { transform: translateX(100%); }
+    }
+    @keyframes tutTypeLine {
+      0%, 15% { width: 12%; }
+      65%, 85% { width: 88%; }
+      100% { width: 12%; }
+    }
+    .tut-float { animation: tutFloatCard 3.2s ease-in-out infinite; }
+    .tut-eq { transform-origin: bottom; animation: tutEqBar 0.85s ease-in-out infinite; }
+    .tut-ring { animation: tutPulseRing 1.7s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+    .tut-scan { animation: tutScanLine 3.4s ease-in-out infinite; }
+    .tut-type { animation: tutTypeLine 3.2s ease-in-out infinite; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body class="app-dvh relative">
+
+  <!-- Subtle Native Ambient Mesh -->
+  <div class="ambient-mesh" aria-hidden="true"></div>
+
+  <!-- =======================================================
+       1. NATIVE iOS / MATERIAL SIGN-IN SCREEN
+       ======================================================= -->
+  <section id="authScreen" class="relative z-10 app-dvh flex flex-col justify-between px-5 py-8 max-w-md mx-auto">
+    <!-- Top Right Theme Toggle -->
+    <div class="flex justify-end">
+      <button id="authThemeToggleBtn" type="button" aria-label="Сменить тему" class="ios-card px-3 py-1.5 rounded-full text-xs font-medium ios-sub flex items-center gap-1.5 press-scale">
+        <i data-lucide="moon" class="w-3.5 h-3.5 theme-icon-el"></i>
+        <span class="theme-label-el">Тёмная</span>
+      </button>
+    </div>
+
+    <!-- Center Native Auth Block -->
+    <div class="my-auto py-6 space-y-7">
+      <div class="text-center space-y-3">
+        <div class="w-[72px] h-[72px] mx-auto rounded-[20px] ios-btn-primary flex items-center justify-center shadow-lg">
+          <span class="font-serif-title italic text-[42px] leading-none -mt-1">a</span>
+        </div>
+        <div class="space-y-1">
+          <h1 class="text-3xl font-bold tracking-tight ios-text">Aura</h1>
+          <p class="text-[13px] ios-sub">Личный дневник атмосферы, фото и музыки</p>
+        </div>
+      </div>
+
+      <!-- iOS Segmented Control -->
+      <div class="ios-fill p-1 rounded-[12px] grid grid-cols-2 gap-1">
+        <button id="authTabLogin" type="button" class="py-2 rounded-[9px] text-[13px] font-semibold ios-card ios-text transition">Вход</button>
+        <button id="authTabRegister" type="button" class="py-2 rounded-[9px] text-[13px] font-medium ios-sub transition">Регистрация</button>
+      </div>
+
+      <!-- Native Grouped Form -->
+      <form id="authForm" class="space-y-4">
+        <div class="ios-card rounded-[18px] overflow-hidden divide-y ios-sep">
+          <div id="authNameWrap" class="hidden px-4 py-3 flex items-center gap-3">
+            <label for="authNameInput" class="text-[13px] ios-sub w-20 shrink-0">Имя</label>
+            <input id="authNameInput" type="text" autocomplete="name" placeholder="Как вас зовут" class="flex-1 min-w-0 bg-transparent text-[15px] ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+          </div>
+          <div class="px-4 py-3 flex items-center gap-3">
+            <label for="authEmailInput" class="text-[13px] ios-sub w-20 shrink-0">Логин</label>
+            <input id="authEmailInput" type="text" required autocomplete="username" placeholder="Логин или email" class="flex-1 min-w-0 bg-transparent text-[15px] ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+          </div>
+          <div class="px-4 py-3 flex items-center gap-3">
+            <label for="authPasswordInput" class="text-[13px] ios-sub w-20 shrink-0">Пароль</label>
+            <input id="authPasswordInput" type="password" required minlength="4" autocomplete="current-password" placeholder="От 4 символов" class="flex-1 min-w-0 bg-transparent text-[15px] ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+          </div>
+        </div>
+
+        <p id="authErrorMsg" class="hidden text-xs text-red-500 font-medium px-1"></p>
+
+        <button id="authSubmitBtn" type="submit" class="w-full py-3.5 rounded-[14px] ios-btn-primary text-[15px] font-semibold shadow-sm press-scale">
+          Войти
+        </button>
+
+        <button id="authGuestBtn" type="button" class="w-full py-3 rounded-[14px] ios-fill text-[14px] font-medium ios-text press-scale">
+          Продолжить без аккаунта
+        </button>
+      </form>
+    </div>
+
+    <p class="text-center text-[11px] ios-muted leading-relaxed">
+      Все записи, медиафайлы и голос хранятся приватно на вашем устройстве.
+    </p>
+  </section>
+
+  <!-- =======================================================
+       2. MAIN NATIVE MOBILE APP SHELL
+       ======================================================= -->
+  <div id="appShell" class="hidden relative z-10 min-h-[100dvh] flex flex-col">
+
+    <!-- NATIVE iOS TOP NAVIGATION BAR -->
+    <header class="sticky top-0 z-30 ios-bar border-b ios-sep safe-top pb-2.5">
+      <div class="max-w-2xl mx-auto flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <button id="brandHomeBtn" type="button" class="flex items-center gap-2 focus:outline-none press-scale">
+            <span class="w-7 h-7 rounded-[8px] ios-btn-primary flex items-center justify-center font-serif-title italic text-base leading-none">a</span>
+            <span class="text-[17px] font-semibold tracking-tight ios-text">Aura</span>
+          </button>
+        </div>
+
+        <!-- Clean Right Utility Icons (Native iOS Toolbar) -->
+        <div class="flex items-center gap-1.5">
+          <button id="searchToggleBtn" type="button" aria-label="Поиск" class="w-8 h-8 rounded-full ios-fill flex items-center justify-center ios-text press-scale">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </button>
+          <button id="themeToggleBtn" type="button" aria-label="Сменить тему" class="w-8 h-8 rounded-full ios-fill flex items-center justify-center ios-text press-scale">
+            <i data-lucide="moon" class="w-4 h-4 theme-icon-el"></i>
+          </button>
+          <button id="openTutorialBtn" type="button" aria-label="Как пользоваться" class="w-8 h-8 rounded-full ios-fill flex items-center justify-center ios-text press-scale">
+            <i data-lucide="help-circle" class="w-4 h-4"></i>
+          </button>
+          <button id="openProfileBtn" type="button" aria-label="Профиль" class="w-8 h-8 rounded-full ios-btn-primary text-xs font-semibold flex items-center justify-center press-scale">
+            <span id="headerAvatarInitials">A</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Native Expandable Search Bar -->
+      <div id="searchBarWrap" class="hidden max-w-2xl mx-auto mt-2.5">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 ios-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <input id="archiveSearchInput" type="search" placeholder="Поиск по записям, месту, песне..." class="w-full pl-9 pr-3 py-2 rounded-[12px] ios-fill text-[14px] ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+        </div>
+      </div>
+    </header>
+
+    <!-- SCROLLABLE VIEWPORT -->
+    <main class="flex-1 max-w-2xl w-full mx-auto px-4 pt-5 pb-28">
+
+      <!-- =====================================
+           TAB 1: ДНЕВНИК (APPLE JOURNAL STYLE)
+           ===================================== -->
+      <section id="viewArchive" class="space-y-5">
+        <!-- iOS Large Title -->
+        <div class="flex items-end justify-between gap-3">
+          <div>
+            <p id="todayDateLabel" class="text-[12px] font-medium uppercase tracking-wide ios-muted">Воскресенье, 22 ноября</p>
+            <h1 class="text-[32px] font-bold tracking-tight leading-tight ios-text">Дневник</h1>
+          </div>
+          <button id="openLifeReelBtn" type="button" class="hidden px-3.5 py-2 rounded-full ios-card text-xs font-semibold ios-text flex items-center gap-1.5 press-scale">
+            <i data-lucide="play-circle" class="w-4 h-4 text-[#4f46e5]"></i>
+            <span>Фильм</span>
+          </button>
+        </div>
+
+        <!-- Native 3-Tile Summary & Limits Row (Always Visible on Main Screen!) -->
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="ios-card rounded-[16px] p-3 space-y-0.5">
+            <div class="text-[11px] font-medium ios-muted">Записи</div>
+            <div id="statDaysCount" class="text-[18px] font-bold font-mono-num ios-text">0 <span class="text-[12px] font-normal ios-muted">/ 50</span></div>
+          </div>
+          <div class="ios-card rounded-[16px] p-3 space-y-0.5">
+            <div class="text-[11px] font-medium ios-muted">Лимит медиа</div>
+            <div class="text-[18px] font-bold font-mono-num ios-text">5 <span class="text-[11px] font-normal ios-muted">/ день</span></div>
+          </div>
+          <div class="ios-card rounded-[16px] p-3 space-y-0.5">
+            <div class="text-[11px] font-medium ios-muted">Всего фото</div>
+            <div id="statMediaCount" class="text-[18px] font-bold font-mono-num ios-text">0</div>
+          </div>
+        </div>
+
+        <!-- Mood & User-Created Custom Filter Chips -->
+        <div id="filterBarRow" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-4 px-4">
+          <button type="button" data-filter="all" class="filter-chip shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition">Все</button>
+          <div id="customFilterChipsWrap" class="flex items-center gap-1.5 shrink-0"></div>
+          <button id="openCustomFilterBtn" type="button" class="shrink-0 px-3 py-1.5 rounded-full border border-dashed ios-sep text-xs font-semibold text-[#4f46e5] flex items-center gap-1 press-scale">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Свой фильтр</span>
+          </button>
+          <button type="button" data-filter="monet" class="filter-chip shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition">Тёплые</button>
+          <button type="button" data-filter="kandinsky" class="filter-chip shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition">Ритм</button>
+          <button type="button" data-filter="wabisabi" class="filter-chip shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition">Тишина</button>
+          <button type="button" data-filter="hockney" class="filter-chip shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition">Свет</button>
+          <button type="button" data-filter="hopper" class="filter-chip shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition">Вечер</button>
+        </div>
+
+        <!-- Strip Mode Indicator -->
+        <div id="stripBanner" class="hidden ios-card rounded-[14px] px-3.5 py-2.5 flex items-center justify-between gap-2">
+          <span class="text-xs ios-sub">Горизонтальная лента 4:5</span>
+          <button id="backToGridBtn" type="button" class="text-xs font-semibold text-[#4f46e5]">В сетку</button>
+        </div>
+
+        <!-- Feed Grid -->
+        <div id="archiveGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+
+        <!-- Native Empty State Card (Clean, Zero AI Examples) -->
+        <div id="archiveBrandEmpty" class="hidden ios-card rounded-[24px] p-8 text-center space-y-4">
+          <div class="w-14 h-14 mx-auto rounded-[16px] ios-fill flex items-center justify-center ios-text">
+            <i data-lucide="book-open" class="w-6 h-6"></i>
+          </div>
+          <div class="space-y-1 max-w-xs mx-auto">
+            <h2 class="text-[19px] font-semibold tracking-tight ios-text">Начните свой дневник</h2>
+            <p class="text-[13px] ios-sub leading-relaxed">
+              Сохраните первый день с фото или видео, любимым треком и своей голосовой заметкой.
+            </p>
+          </div>
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
+            <button id="emptyStartWritingBtn" type="button" class="w-full sm:w-auto px-6 py-3 rounded-[14px] ios-btn-primary text-[14px] font-semibold press-scale flex items-center justify-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Новая запись</span>
+            </button>
+            <button id="emptyOpenTutorialBtn" type="button" class="w-full sm:w-auto px-5 py-3 rounded-[14px] ios-fill text-[14px] font-medium ios-text press-scale">
+              Как это работает
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty Search State -->
+        <div id="archiveEmptyState" class="hidden text-center py-14 space-y-3">
+          <p class="text-sm ios-muted">Ничего не найдено</p>
+          <button id="clearFiltersBtn" type="button" class="px-4 py-2 rounded-full ios-btn-primary text-xs font-semibold">Сбросить</button>
+        </div>
+      </section>
+
+      <!-- =====================================
+           TAB 2: КАЛЕНДАРЬ (NATIVE iOS CALENDAR)
+           ===================================== -->
+      <section id="viewCalendar" class="hidden space-y-5">
+        <div class="flex items-end justify-between gap-2">
+          <h1 class="text-[32px] font-bold tracking-tight ios-text">Календарь</h1>
+          <div class="ios-card rounded-full p-1 flex items-center gap-1">
+            <button id="calPrevMonthBtn" type="button" aria-label="Назад" class="w-7 h-7 rounded-full hover:opacity-70 flex items-center justify-center ios-text"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+            <span id="calMonthLabel" class="text-xs font-semibold px-2 min-w-[96px] text-center ios-text">Ноябрь 2026</span>
+            <button id="calNextMonthBtn" type="button" aria-label="Вперёд" class="w-7 h-7 rounded-full hover:opacity-70 flex items-center justify-center ios-text"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+
+        <div class="ios-card rounded-[22px] p-4 space-y-3">
+          <div class="grid grid-cols-7 text-center text-[11px] font-semibold ios-muted">
+            <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+          </div>
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1.5"></div>
+        </div>
+
+        <div id="calendarSavedSection" class="hidden space-y-2">
+          <div class="text-xs font-semibold uppercase tracking-wide ios-muted px-1">Записи</div>
+          <div id="calendarSavedList" class="ios-card rounded-[18px] divide-y ios-sep overflow-hidden"></div>
+        </div>
+      </section>
+
+      <!-- =====================================
+           TAB 3: НОВАЯ ЗАПИСЬ (NATIVE iOS COMPOSER)
+           ===================================== -->
+      <section id="viewCreate" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <button id="cancelCreateBtn" type="button" class="text-[15px] text-[#4f46e5] font-normal press-scale">Отмена</button>
+          <h1 class="text-[17px] font-semibold ios-text">Новая запись</h1>
+          <button id="topSaveDayBtn" type="button" class="text-[15px] text-[#4f46e5] font-semibold press-scale">Готово</button>
+        </div>
+
+        <form id="createDayForm" class="space-y-4">
+          <!-- Photo/Video Preview & Media Strip -->
+          <div class="ios-card rounded-[22px] p-3.5 space-y-3">
+            <div class="relative w-full max-w-[300px] mx-auto aspect-4-5 rounded-[16px] overflow-hidden ios-fill">
+              <canvas id="previewCanvas" width="1080" height="1350" class="w-full h-full block"></canvas>
+              <button id="photoUploadTrigger" type="button" class="absolute bottom-3 right-3 px-3.5 py-2 rounded-full ios-btn-primary text-xs font-semibold shadow-lg flex items-center gap-1.5 press-scale">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span id="photoUploadBtnText">Фото / Видео</span>
+              </button>
+              <input id="inputPhotoFiles" type="file" accept="image/*,video/*" multiple class="hidden" />
+            </div>
+
+            <div class="flex items-center justify-between gap-2 px-1">
+              <div id="uploadedPhotosPreview" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
+              <span id="mediaLimitBadge" class="shrink-0 text-[11px] font-mono-num font-semibold px-2.5 py-1 rounded-full ios-fill ios-sub">0 / 5 файлов</span>
+            </div>
+          </div>
+
+          <!-- Clean Journal Editor Card -->
+          <div class="ios-card rounded-[20px] p-4 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <input id="inputFolderTitle" type="text" placeholder="Заголовок дня (или авто)" class="flex-1 min-w-0 bg-transparent text-[18px] font-semibold ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+              <button id="regenTitleBtn" type="button" aria-label="Придумать заголовок" class="p-1.5 rounded-full ios-fill ios-sub press-scale"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
+            </div>
+            <textarea id="inputDayText" rows="4" required placeholder="Расскажите, как прошёл ваш день..." class="w-full bg-transparent text-[15px] ios-text placeholder:text-[#8e8e93] focus:outline-none resize-none leading-relaxed"></textarea>
+            <div class="pt-2 border-t ios-sep flex items-center justify-between text-[12px] ios-muted">
+              <span id="previewStyleHint">Клод Моне · Тёплая ностальгия</span>
+              <span id="textCharCount" class="font-mono-num">0</span>
+            </div>
+          </div>
+
+          <!-- Native iOS Inset Grouped List for Attachments -->
+          <div class="ios-card rounded-[20px] overflow-hidden divide-y ios-sep">
+            <!-- Row 1: Music (Spotify / Yandex / Search / Upload) -->
+            <button id="openMusicSheetBtn" type="button" class="ios-row w-full text-left">
+              <div class="flex items-center gap-3 min-w-0">
+                <div id="draftTrackArtWrap" class="w-9 h-9 rounded-[10px] bg-[#1db954]/15 text-[#1db954] overflow-hidden flex items-center justify-center shrink-0">
+                  <i data-lucide="music" class="w-4 h-4"></i>
+                </div>
+                <div class="min-w-0">
+                  <div id="draftTrackTitle" class="text-[15px] font-medium ios-text truncate">Музыка дня</div>
+                  <div id="draftTrackSub" class="text-[12px] ios-muted truncate">Spotify, Яндекс Музыка, поиск или файл</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-xs font-medium text-[#4f46e5]">Выбрать</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 ios-muted"></i>
+              </div>
+            </button>
+
+            <!-- Row 2: Microphone Voice Recorder (User's Real Voice Only!) -->
+            <div class="p-4 space-y-2.5">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-[10px] bg-red-500/12 text-red-500 flex items-center justify-center shrink-0">
+                    <i data-lucide="mic" class="w-4 h-4"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="text-[15px] font-medium ios-text">Голосовая заметка</div>
+                    <div id="draftVoiceSub" class="text-[12px] ios-muted truncate">Ваш голос · по желанию (до 2 мин)</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span id="voiceRecTimer" class="hidden text-xs font-mono-num text-red-500 font-semibold">00:00</span>
+                  <button id="recordVoiceBtn" type="button" class="px-3.5 py-1.5 rounded-full ios-fill text-xs font-semibold ios-text press-scale">
+                    <span id="recordVoiceLabel">Записать</span>
+                  </button>
+                </div>
+              </div>
+              <div id="draftVoicePlayerWrap" class="hidden flex items-center gap-2 pt-1">
+                <audio id="draftVoiceAudio" controls class="flex-1 h-8"></audio>
+                <button id="deleteDraftVoiceBtn" type="button" aria-label="Удалить голос" class="w-8 h-8 rounded-full bg-red-500/15 text-red-500 flex items-center justify-center shrink-0">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 2.5: User's Own Custom Filters (e.g. Аура момент, Грустно момент...) -->
+            <div class="p-4 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-[10px] bg-purple-500/12 text-purple-500 flex items-center justify-center shrink-0">
+                    <i data-lucide="tag" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <div class="text-[15px] font-medium ios-text">Мои фильтры</div>
+                    <div class="text-[12px] ios-muted">Создайте свои метки для этого дня</div>
+                  </div>
+                </div>
+                <button id="composerAddFilterBtn" type="button" class="px-3 py-1.5 rounded-full ios-fill text-xs font-semibold text-[#4f46e5] press-scale">+ Создать</button>
+              </div>
+              <div id="composerCustomFiltersRow" class="flex flex-wrap gap-1.5 empty:hidden"></div>
+            </div>
+
+            <!-- Row 3: Date & Location -->
+            <div class="ios-row">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-[10px] bg-[#4f46e5]/12 text-[#4f46e5] flex items-center justify-center shrink-0">
+                  <i data-lucide="calendar" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[15px] font-medium ios-text">Дата</span>
+              </div>
+              <input id="inputDayDate" type="date" class="bg-transparent text-[14px] ios-sub focus:outline-none text-right" />
+            </div>
+
+            <div class="ios-row">
+              <div class="flex items-center gap-3 shrink-0">
+                <div class="w-9 h-9 rounded-[10px] bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
+                  <i data-lucide="map-pin" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[15px] font-medium ios-text">Место</span>
+              </div>
+              <input id="inputDayPlace" type="text" placeholder="Город, погода..." class="flex-1 min-w-0 bg-transparent text-[14px] ios-text placeholder:text-[#8e8e93] focus:outline-none text-right" />
+            </div>
+
+            <!-- Row 4: Manual Rhythm Settings (Collapsible) -->
+            <div class="p-4 space-y-3">
+              <button id="toggleManualMusicBtn" type="button" class="w-full flex items-center justify-between text-[13px] ios-sub">
+                <span>Настроить темп и стиль вручную</span>
+                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+              </button>
+              <div id="manualMusicControls" class="hidden grid grid-cols-3 gap-2 pt-1">
+                <div class="ios-fill rounded-[12px] px-2.5 py-2">
+                  <div class="flex justify-between text-[10px] ios-muted mb-1"><label for="inputSongBpm">BPM</label><output id="bpmValueLabel" for="inputSongBpm" class="font-mono-num ios-text">84</output></div>
+                  <input id="inputSongBpm" type="range" min="55" max="150" value="84" aria-describedby="bpmValueLabel" class="w-full accent-[#4f46e5] h-1" />
+                </div>
+                <div class="ios-fill rounded-[12px] px-2.5 py-2">
+                  <label for="inputSongMode" class="block text-[10px] ios-muted mb-0.5">Лад</label>
+                  <select id="inputSongMode" class="w-full bg-transparent text-xs ios-text focus:outline-none"><option value="minor">Минор</option><option value="major">Мажор</option></select>
+                </div>
+                <div class="ios-fill rounded-[12px] px-2.5 py-2">
+                  <label for="inputSongGenre" class="block text-[10px] ios-muted mb-0.5">Жанр</label>
+                  <select id="inputSongGenre" class="w-full bg-transparent text-xs ios-text focus:outline-none"><option value="jazz">Джаз</option><option value="electronic">Электроника</option><option value="ambient">Эмбиент</option><option value="indie">Инди / Поп</option><option value="noir">Трип-хоп</option></select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 rounded-[14px] ios-btn-primary text-[15px] font-semibold shadow-sm press-scale">
+            Сохранить день
+          </button>
+        </form>
+      </section>
+
+      <!-- =====================================
+           TAB 4: О СТИЛЕ (VISUAL SYSTEM)
+           ===================================== -->
+      <section id="viewSystem" class="hidden space-y-5">
+        <div>
+          <h1 class="text-[32px] font-bold tracking-tight ios-text">О стиле</h1>
+          <p class="text-[14px] ios-sub mt-1 leading-relaxed">
+            Aura переводит связку «текст + цвета фото + темп песни» в единый журнальный формат 4:5 и пиксельную художественную обработку.
+          </p>
+        </div>
+        <div id="artReferencesGrid" class="space-y-3"></div>
+      </section>
+
+    </main>
+
+    <!-- NATIVE iOS / MATERIAL BOTTOM TAB BAR (ALL SCREEN SIZES) -->
+    <nav class="fixed bottom-0 inset-x-0 z-30 ios-bar border-t ios-sep safe-bottom pt-1.5" aria-label="Нижняя навигация">
+      <div class="max-w-md mx-auto grid grid-cols-5 items-center">
+        <button id="navArchive" type="button" class="tab-btn flex flex-col items-center gap-0.5 py-1 text-[10px] font-medium transition">
+          <i data-lucide="book-open" class="w-5 h-5"></i>
+          <span>Дневник</span>
+        </button>
+        <button id="navCalendar" type="button" class="tab-btn flex flex-col items-center gap-0.5 py-1 text-[10px] font-medium transition">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+          <span>Календарь</span>
+        </button>
+        <button id="navCreate" type="button" aria-label="Новая запись" class="tab-btn flex flex-col items-center justify-center py-0.5">
+          <span class="w-11 h-11 -mt-3 rounded-full ios-btn-primary flex items-center justify-center shadow-lg press-scale">
+            <i data-lucide="plus" class="w-6 h-6"></i>
+          </span>
+        </button>
+        <button id="navStrip" type="button" class="tab-btn flex flex-col items-center gap-0.5 py-1 text-[10px] font-medium transition">
+          <i data-lucide="gallery-horizontal" class="w-5 h-5"></i>
+          <span>Лента</span>
+        </button>
+        <button id="navSystem" type="button" class="tab-btn flex flex-col items-center gap-0.5 py-1 text-[10px] font-medium transition">
+          <i data-lucide="compass" class="w-5 h-5"></i>
+          <span>Стиль</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- =======================================================
+       PROFILE SHEET (iOS SETTINGS STYLE)
+       ======================================================= -->
+  <div id="profileSheet" role="dialog" aria-modal="true" aria-label="Профиль" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4">
+    <div class="sheet-up w-full sm:max-w-md rounded-t-[28px] sm:rounded-[24px] overflow-hidden shadow-2xl" style="background:var(--bg-app); border:0.5px solid var(--sep)">
+      <div class="px-5 py-4 ios-card border-b ios-sep flex items-center justify-between">
+        <h2 class="text-[17px] font-semibold ios-text">Профиль</h2>
+        <button id="closeProfileBtn" type="button" class="text-[15px] font-semibold text-[#4f46e5]">Готово</button>
+      </div>
+      <div class="p-4 space-y-4">
+        <div class="ios-card rounded-[18px] p-4 flex items-center gap-3.5">
+          <div id="profileAvatarBig" class="w-12 h-12 rounded-full ios-btn-primary text-lg font-semibold flex items-center justify-center shrink-0">A</div>
+          <div class="min-w-0">
+            <div id="profileNameText" class="text-[16px] font-semibold ios-text truncate">Пользователь</div>
+            <div id="profileEmailText" class="text-xs ios-muted truncate">email</div>
+            <div id="profileStatsText" class="text-xs ios-sub mt-0.5">0 / 50 дней</div>
+          </div>
+        </div>
+
+        <div class="ios-card rounded-[18px] overflow-hidden divide-y ios-sep">
+          <button id="exportBackupBtn" type="button" class="ios-row w-full text-left">
+            <span class="text-[15px] ios-text flex items-center gap-3"><i data-lucide="download" class="w-4 h-4 text-[#4f46e5]"></i> Экспорт копии (JSON)</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 ios-muted"></i>
+          </button>
+          <label for="importBackupInput" class="ios-row w-full cursor-pointer">
+            <span class="text-[15px] ios-text flex items-center gap-3"><i data-lucide="upload" class="w-4 h-4 text-[#4f46e5]"></i> Импорт копии (JSON)</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 ios-muted"></i>
+          </label>
+          <input id="importBackupInput" type="file" accept="application/json" class="hidden" />
+          <button id="profileTutorialBtn" type="button" class="ios-row w-full text-left">
+            <span class="text-[15px] ios-text flex items-center gap-3"><i data-lucide="help-circle" class="w-4 h-4 text-[#4f46e5]"></i> Гид по приложению</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 ios-muted"></i>
+          </button>
+        </div>
+
+        <button id="logoutBtn" type="button" class="w-full py-3.5 rounded-[14px] ios-card text-red-500 text-[15px] font-semibold press-scale">
+          Выйти из аккаунта
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       INTERACTIVE 4-STEP TUTORIAL SHEET
+       ======================================================= -->
+  <div id="tutorialModal" role="dialog" aria-modal="true" aria-label="Как пользоваться" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/55 backdrop-blur-sm sm:p-4">
+    <div class="sheet-up w-full sm:max-w-md rounded-t-[28px] sm:rounded-[24px] overflow-hidden shadow-2xl ios-card">
+      <div class="px-5 pt-4 pb-3 border-b ios-sep flex items-center justify-between">
+        <span id="tutStepTag" class="text-xs font-semibold ios-muted">Шаг 1 из 4</span>
+        <button id="closeTutorialBtn" type="button" class="text-xs font-semibold text-[#4f46e5]">Пропустить</button>
+      </div>
+      <div class="p-5 sm:p-6 text-center space-y-5">
+        <!-- Live Animated Visual Demo Stage -->
+        <div id="tutAnimStage" class="w-full h-44 rounded-[20px] ios-fill relative overflow-hidden flex items-center justify-center border ios-sep"></div>
+        <div class="space-y-1.5 min-h-[92px]">
+          <h2 id="tutTitle" class="text-[20px] font-bold tracking-tight ios-text">Запиши свой день</h2>
+          <p id="tutDesc" class="text-[13px] ios-sub leading-relaxed"></p>
+        </div>
+        <div id="tutDots" class="flex items-center justify-center gap-1.5"></div>
+        <div class="flex items-center gap-2">
+          <button id="tutPrevBtn" type="button" class="hidden px-4 py-3 rounded-[14px] ios-fill text-xs font-semibold ios-text">Назад</button>
+          <button id="tutNextBtn" type="button" class="flex-1 py-3 rounded-[14px] ios-btn-primary text-[15px] font-semibold press-scale">Далее</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       MUSIC PICKER SHEET (SPOTIFY + YANDEX + LIVE SEARCH + FILE)
+       ======================================================= -->
+  <div id="musicSheet" role="dialog" aria-modal="true" aria-label="Выбор музыки" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/55 backdrop-blur-sm sm:p-4">
+    <div class="sheet-up w-full sm:max-w-lg rounded-t-[28px] sm:rounded-[24px] max-h-[88vh] flex flex-col overflow-hidden shadow-2xl" style="background:var(--bg-app); border:0.5px solid var(--sep)">
+      <div class="px-5 pt-3 pb-3.5 ios-card border-b ios-sep space-y-3">
+        <div class="w-9 h-1 rounded-full bg-gray-400/40 mx-auto sm:hidden"></div>
+        <div class="flex items-center justify-between">
+          <h2 class="text-[17px] font-semibold ios-text">Саундтрек дня</h2>
+          <button id="closeMusicSheetBtn" type="button" class="text-[15px] font-semibold text-[#4f46e5]">Закрыть</button>
+        </div>
+        <div class="grid grid-cols-3 gap-1 ios-fill p-1 rounded-[12px]">
+          <button id="musicTabSearch" type="button" class="music-tab py-1.5 rounded-[9px] text-xs font-semibold transition">Поиск</button>
+          <button id="musicTabSpotifyLink" type="button" class="music-tab py-1.5 rounded-[9px] text-xs font-medium transition">Spotify / Я.Музыка</button>
+          <button id="musicTabUpload" type="button" class="music-tab py-1.5 rounded-[9px] text-xs font-medium transition">Файл</button>
+        </div>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-3 flex-1">
+        <div id="musicPanelSearch" class="space-y-3">
+          <div class="flex gap-2">
+            <input id="liveMusicSearchInput" type="search" placeholder="Исполнитель или трек..." class="flex-1 px-3.5 py-2.5 rounded-[12px] ios-card text-sm ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+            <button id="runMusicSearchBtn" type="button" class="px-4 py-2.5 rounded-[12px] ios-btn-primary text-xs font-semibold shrink-0">Найти</button>
+          </div>
+          <div id="musicSearchStatus" aria-live="polite" class="text-xs ios-muted px-1"></div>
+          <div id="musicResultsList" class="space-y-2"></div>
+        </div>
+
+        <div id="musicPanelSpotifyLink" class="hidden space-y-3">
+          <div class="ios-card rounded-[16px] overflow-hidden divide-y ios-sep">
+            <input id="spotifyUrlInput" type="url" placeholder="open.spotify.com/track/... или music.yandex.kz/..." class="w-full px-4 py-3 bg-transparent text-sm ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+            <input id="customLinkTitleInput" type="text" placeholder="Название трека (необязательно)" class="w-full px-4 py-3 bg-transparent text-sm ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+          </div>
+          <button id="applySpotifyLinkBtn" type="button" class="w-full py-3 rounded-[14px] bg-[#1db954] text-white text-sm font-semibold press-scale">Прикрепить трек</button>
+        </div>
+
+        <div id="musicPanelUpload" class="hidden">
+          <label for="inputAudioFile" class="block ios-card border-dashed rounded-[18px] p-8 text-center cursor-pointer space-y-1.5">
+            <i data-lucide="upload-cloud" class="w-7 h-7 ios-muted mx-auto"></i>
+            <div class="text-sm font-semibold ios-text">Выбрать аудиофайл</div>
+            <div class="text-xs ios-muted">MP3, WAV или M4A · лимит 1 файл (до 15 МБ)</div>
+          </label>
+          <input id="inputAudioFile" type="file" accept="audio/*" class="hidden" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       LIFE REEL MODAL
+       ======================================================= -->
+  <div id="lifeReelModal" role="dialog" aria-modal="true" aria-label="Фильм из всех дней" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="sheet-up w-full max-w-md rounded-[26px] overflow-hidden shadow-2xl ios-card">
+      <div class="px-5 py-3.5 border-b ios-sep flex items-center justify-between">
+        <div>
+          <h2 class="text-[16px] font-semibold ios-text">Фильм из всех дней</h2>
+          <p id="lifeReelSub" class="text-[11px] ios-muted">Хронология дневника</p>
+        </div>
+        <button id="closeLifeReelBtn" type="button" class="text-sm font-semibold text-[#4f46e5]">Готово</button>
+      </div>
+      <div class="p-5 flex flex-col items-center gap-4 ios-fill">
+        <div class="relative w-full max-w-[310px] aspect-4-5 rounded-[18px] overflow-hidden shadow-xl bg-black">
+          <canvas id="lifeReelCanvas" width="1080" height="1350" class="w-full h-full block"></canvas>
+          <div id="lifeReelProgress" class="absolute top-3 inset-x-3 flex gap-1 z-10"></div>
+        </div>
+        <div class="w-full max-w-[310px] flex gap-2">
+          <button id="toggleReelMusicBtn" type="button" class="flex-1 py-2.5 rounded-[12px] ios-card text-xs font-semibold ios-text"><span id="reelMusicLabel">Музыка</span></button>
+          <button id="recordLifeReelBtn" type="button" class="flex-1 py-2.5 rounded-[12px] ios-btn-primary text-xs font-semibold"><span id="recordReelLabel">Скачать видео</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       IMMERSIVE DAY MEMORY SHEET
+       ======================================================= -->
+  <div id="dayModal" role="dialog" aria-modal="true" aria-labelledby="modalFolderTitle" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/65 backdrop-blur-md sm:p-5">
+    <div class="sheet-up w-full max-w-4xl rounded-t-[28px] sm:rounded-[24px] shadow-2xl overflow-hidden max-h-[94vh] flex flex-col" style="background:var(--bg-app); border:0.5px solid var(--sep)">
+      <div class="flex items-center justify-between px-4 sm:px-5 py-3.5 ios-card border-b ios-sep shrink-0">
+        <div class="min-w-0">
+          <h2 id="modalFolderTitle" class="text-[16px] font-semibold ios-text truncate">Папка дня</h2>
+          <p id="modalDateText" class="text-[11px] ios-muted">22 ноября 2026</p>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="exportVideoBtn" type="button" class="px-3 py-1.5 rounded-full ios-btn-primary text-xs font-semibold flex items-center gap-1 press-scale"><i data-lucide="video" class="w-3.5 h-3.5"></i><span id="exportVideoLabel" class="hidden sm:inline">Видео</span></button>
+          <button id="exportPngBtn" type="button" class="px-3 py-1.5 rounded-full ios-fill text-xs font-semibold ios-text press-scale">PNG</button>
+          <button id="deleteDayBtn" type="button" aria-label="Удалить" class="h-8 px-2.5 rounded-full ios-fill hover:bg-red-500/15 ios-sub hover:text-red-500 text-xs font-semibold flex items-center gap-1 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i><span id="deleteDayLabel" class="hidden">Удалить?</span></button>
+          <button id="closeModalBtn" type="button" aria-label="Закрыть" class="w-8 h-8 rounded-full ios-fill flex items-center justify-center ios-text"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 overflow-y-auto flex-1">
+        <div class="lg:col-span-6 p-5 ios-fill flex flex-col items-center gap-3.5">
+          <div class="relative w-full max-w-[340px] aspect-4-5 rounded-[18px] overflow-hidden shadow-xl bg-black">
+            <canvas id="modalCanvas" width="1080" height="1350" class="w-full h-full block"></canvas>
+            <button id="compareOriginalBtn" type="button" class="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/65 text-white text-[11px] font-semibold backdrop-blur-md flex items-center gap-1.5 press-scale z-10">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span id="compareOriginalLabel">Атмосфера · Оригинал</span>
+            </button>
+            <div id="modalSlideDots" class="absolute top-3 right-3 flex items-center gap-1.5 z-10"></div>
+          </div>
+
+          <div id="spotifyEmbedWrap" class="hidden w-full max-w-[340px] rounded-[14px] overflow-hidden"></div>
+
+          <div class="w-full max-w-[340px] ios-card rounded-[18px] p-3 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <button id="toggleMusicBtn" type="button" aria-label="Воспроизвести" class="w-10 h-10 rounded-full ios-btn-primary flex items-center justify-center shrink-0 press-scale"><i data-lucide="play" class="w-4 h-4 ml-0.5"></i></button>
+                <div class="min-w-0">
+                  <p id="modalSongTitle" class="text-[13px] font-semibold ios-text truncate">Трек дня</p>
+                  <p id="modalSongMeta" class="text-[11px] ios-muted">78 BPM</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <a id="modalSongExternalLink" href="#" target="_blank" rel="noopener noreferrer" class="hidden px-2.5 py-1 rounded-full bg-[#1db954]/15 text-[11px] font-semibold text-[#1db954]">Spotify</a>
+                <a id="modalYandexLink" href="#" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-full bg-amber-400/20 text-[11px] font-semibold text-amber-600">Я.Музыка</a>
+              </div>
+            </div>
+
+            <div id="modalVoiceSection" class="hidden pt-2 border-t ios-sep space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] ios-muted">
+                <span class="flex items-center gap-1"><i data-lucide="mic" class="w-3 h-3 text-red-500"></i> Ваша голосовая заметка</span>
+                <span id="modalVoiceDuration" class="font-mono-num"></span>
+              </div>
+              <audio id="modalVoiceAudio" controls class="w-full h-8"></audio>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6 p-5 space-y-4">
+          <div class="grid grid-cols-2 gap-1 ios-fill p-1 rounded-[12px]">
+            <button id="tabFolderContent" type="button" class="modal-subtab py-1.5 rounded-[9px] text-xs font-semibold transition">Запись и папка</button>
+            <button id="tabExplainLogic" type="button" class="modal-subtab py-1.5 rounded-[9px] text-xs font-medium transition">Атмосфера</button>
+          </div>
+
+          <div id="panelFolderContent" class="space-y-4">
+            <div class="ios-card rounded-[18px] p-4 space-y-3">
+              <div id="modalPlaceBadge" class="hidden inline-flex items-center gap-1 text-xs ios-muted"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span id="modalPlaceText"></span></div>
+              <p id="modalDayText" class="text-[15px] ios-text leading-relaxed"></p>
+              <div class="flex items-center justify-between pt-2 border-t ios-sep">
+                <div id="modalPaletteDots" class="flex items-center gap-1.5"></div>
+                <span id="modalMoodBadge" class="text-xs ios-muted">Тёплая ностальгия</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-xs font-semibold uppercase tracking-wide ios-muted px-1">Медиа в папке</div>
+              <div id="modalPhotoThumbs" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="ios-card rounded-[16px] p-3.5 font-mono-num text-[11px] ios-sub">
+              <div id="modalFolderTree" class="space-y-1"></div>
+            </div>
+          </div>
+
+          <div id="panelExplainLogic" class="hidden space-y-3">
+            <div class="ios-card rounded-[18px] p-4 space-y-1">
+              <div id="explainArtTitle" class="text-sm font-semibold ios-text">Клод Моне</div>
+              <p id="explainArtReason" class="text-xs ios-sub leading-relaxed"></p>
+            </div>
+            <div id="explainCausalCards" class="space-y-2"></div>
+            <div class="ios-card rounded-[18px] p-4 space-y-2.5"><div id="explainMeters" class="space-y-2.5"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       CUSTOM USER FILTER CREATOR SHEET
+       ======================================================= -->
+  <div id="customFilterModal" role="dialog" aria-modal="true" aria-label="Создать свой фильтр" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/55 backdrop-blur-sm sm:p-4">
+    <div class="sheet-up w-full sm:max-w-md rounded-t-[28px] sm:rounded-[24px] overflow-hidden shadow-2xl" style="background:var(--bg-app); border:0.5px solid var(--sep)">
+      <div class="px-5 py-4 ios-card border-b ios-sep flex items-center justify-between">
+        <h2 class="text-[17px] font-semibold ios-text">Свои фильтры</h2>
+        <button id="closeCustomFilterBtn" type="button" class="text-[15px] font-semibold text-[#4f46e5]">Готово</button>
+      </div>
+      <div class="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
+        <form id="customFilterForm" class="space-y-3">
+          <div class="ios-card rounded-[16px] overflow-hidden divide-y ios-sep">
+            <div class="px-4 py-3">
+              <label for="newFilterNameInput" class="block text-[11px] font-semibold ios-muted mb-1">Название вашего фильтра</label>
+              <input id="newFilterNameInput" type="text" required maxlength="28" placeholder="Например: Аура момент, Грустно момент..." class="w-full bg-transparent text-[15px] ios-text placeholder:text-[#8e8e93] focus:outline-none" />
+            </div>
+            <div class="px-4 py-3 space-y-2">
+              <span class="block text-[11px] font-semibold ios-muted">Цвет метки</span>
+              <div id="filterColorPicker" class="flex items-center gap-2.5">
+                <button type="button" data-color="#f59e0b" class="f-color-btn w-7 h-7 rounded-full ring-2 ring-offset-2 ring-[#4f46e5]" style="background:#f59e0b"></button>
+                <button type="button" data-color="#4f46e5" class="f-color-btn w-7 h-7 rounded-full" style="background:#4f46e5"></button>
+                <button type="button" data-color="#ec4899" class="f-color-btn w-7 h-7 rounded-full" style="background:#ec4899"></button>
+                <button type="button" data-color="#8b5cf6" class="f-color-btn w-7 h-7 rounded-full" style="background:#8b5cf6"></button>
+                <button type="button" data-color="#10b981" class="f-color-btn w-7 h-7 rounded-full" style="background:#10b981"></button>
+                <button type="button" data-color="#64748b" class="f-color-btn w-7 h-7 rounded-full" style="background:#64748b"></button>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="w-full py-3 rounded-[14px] ios-btn-primary text-[14px] font-semibold press-scale">Добавить фильтр</button>
+        </form>
+
+        <div id="existingCustomFiltersWrap" class="hidden space-y-2">
+          <div class="text-xs font-semibold uppercase tracking-wide ios-muted px-1">Ваши созданные фильтры</div>
+          <div id="existingCustomFiltersList" class="ios-card rounded-[16px] overflow-hidden divide-y ios-sep"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toastContainer" role="status" aria-live="polite" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    const ACCOUNTS_KEY = 'aura_accounts_v1';
+    const SESSION_KEY = 'aura_session_v1';
+    const TUTORIAL_KEY = 'aura_tutorial_seen_v1';
+    const THEME_KEY = 'aura_theme_v1';
+    const IDB_NAME = 'aura_diary_db';
+    const IDB_STORE = 'days_store';
+
+    const ART_STYLES = {
+      monet: { id: 'monet', name: 'Клод Моне', movement: 'Импрессионизм · Свет и мазки', trigger: 'Тёплый, уютный день и неспешная музыка (≤ 98 BPM).', why: 'Пиксельная перерисовка фото мягкими мазками кисти из реальной палитры кадра.', fontMode: 'serif', grain: 0.14, vignette: 0.26, matBg: '#fbf8f1', matInk: '#2c2218', matMuted: '#7d6e5d', accent: '#d8973c' },
+      kandinsky: { id: 'kandinsky', name: 'Василий Кандинский', movement: 'Геометрия · Собранность и ритм', trigger: 'Сфокусированный, напряжённый день и энергичный темп (≥ 110 BPM).', why: 'Контрастный дуотон, сетка и геометрические импульсы в ритме трека.', fontMode: 'sans-bold', grain: 0.08, vignette: 0.34, matBg: '#141920', matInk: '#f0f4f8', matMuted: '#8ea1b5', accent: '#4ea8de' },
+      wabisabi: { id: 'wabisabi', name: 'Ваби-саби', movement: 'Японский минимализм · Тишина', trigger: 'Тихий, созерцательный день и медленная минорная музыка (≤ 80 BPM).', why: 'Мягкая тональность туши, фактура бумаги васи, дымка и печать ханко.', fontMode: 'serif-light', grain: 0.18, vignette: 0.16, matBg: '#f2f1ed', matInk: '#25292c', matMuted: '#6f777d', accent: '#6f8594' },
+      hockney: { id: 'hockney', name: 'Дэвид Хокни', movement: 'Солнечный поп-арт · Ясность', trigger: 'Яркий, солнечный день и мажорная музыка (95–130 BPM).', why: 'Сочное цветовое поле, солнечные блики воды и чистая белая рамка.', fontMode: 'sans-clean', grain: 0.04, vignette: 0.10, matBg: '#ffffff', matInk: '#172830', matMuted: '#587482', accent: '#0f9bd7' },
+      hopper: { id: 'hopper', name: 'Эдвард Хоппер', movement: 'Ночной кинематограф · Светотень', trigger: 'Дождливый, камерный или вечерний городской день с минорной музыкой.', why: 'Кинематографическая светотень, диагональный свет витрин и капли дождя.', fontMode: 'serif', grain: 0.20, vignette: 0.44, matBg: '#191a1f', matInk: '#f2ece4', matMuted: '#99928b', accent: '#d97757' }
+    };
+
+    const CURATED_SPOTIFY_TRACKS = [
+      { title: 'Ryuichi Sakamoto — Merry Christmas Mr. Lawrence', artist: 'Ryuichi Sakamoto', trackName: 'Merry Christmas Mr. Lawrence', spotifyId: '4NFIUZzAAJ5cvw6WurI9Kl', url: 'https://open.spotify.com/track/4NFIUZzAAJ5cvw6WurI9Kl', bpm: 66, mode: 'minor', genre: 'ambient', tag: 'Тишина' },
+      { title: 'Portishead — Third', artist: 'Portishead', trackName: 'Third', spotifyId: '4gxG38GmhagF2T6eaTdUR6', url: 'https://open.spotify.com/track/4gxG38GmhagF2T6eaTdUR6', bpm: 76, mode: 'minor', genre: 'noir', tag: 'Дождь и нуар' },
+      { title: 'Aphex Twin — Syro', artist: 'Aphex Twin', trackName: 'Syro', spotifyId: '3NK7KFnTh3rKCgUvsKIDfi', url: 'https://open.spotify.com/track/3NK7KFnTh3rKCgUvsKIDfi', bpm: 128, mode: 'minor', genre: 'electronic', tag: 'Ночной ритм' },
+      { title: 'Sampha — Process', artist: 'Sampha', trackName: 'Process', spotifyId: '5IRLnB7JqTMcIlMtE0Rcuv', url: 'https://open.spotify.com/track/5IRLnB7JqTMcIlMtE0Rcuv', bpm: 84, mode: 'minor', genre: 'jazz', tag: 'Тёплый вечер' },
+      { title: 'Solange — A Seat At The Table', artist: 'Solange', trackName: 'A Seat At The Table', spotifyId: '2TyCAfhwu5tRqFW8VnGMIL', url: 'https://open.spotify.com/track/2TyCAfhwu5tRqFW8VnGMIL', bpm: 108, mode: 'major', genre: 'indie', tag: 'Свет и грув' }
+    ];
+
+    const TUTORIAL_STEPS = [
+      { icon: 'plus-circle', title: 'Запиши свой день', desc: 'Нажми «+» в нижней панели, добавь до 5 фото или коротких видео, пару строк о дне, место и погоду.' },
+      { icon: 'music', title: 'Выбери песню дня', desc: 'Прикрепи трек через поиск с 30-сек превью, ссылку Spotify / Яндекс Музыки или свой MP3-файл (до 15 МБ).' },
+      { icon: 'mic', title: 'Запиши свой голос', desc: 'По желанию надиктуй голосовую заметку на микрофон (до 2 минут) — без ИИ-голосов, только твой живой голос.' },
+      { icon: 'film', title: 'Атмосфера и Фильм', desc: 'Aura преобразует кадры под настроение дня. Внутри записи нажми «Атмосфера · Оригинал», скачай видео .webm или собери «Фильм» из всех дней.' }
+    ];
+
+    let state = {
+      user: null, authMode: 'login', view: 'archive', days: [], customFilters: [], newFilterColor: '#f59e0b',
+      filterStyle: 'all', searchQuery: '', activeDayId: null, compareOriginal: false,
+      modalTab: 'folder', musicSheetTab: 'search',
+      calYear: new Date().getFullYear(), calMonth: new Date().getMonth(),
+      draft: {
+        text: '', date: new Date().toISOString().slice(0, 10), place: '', folderTitle: '', titleManuallyEdited: false,
+        photos: [], palette: ['#d8973c', '#8c5323', '#3b2818', '#f0d29c'],
+        songTitle: '', songUrl: '', spotifyId: null, yandexMusic: null, previewUrl: null, artworkUrl: null,
+        bpm: 84, mode: 'minor', genre: 'jazz', customAudioUrl: null, voiceNoteUrl: null, voiceNoteDuration: '', customFilterIds: []
+      }
+    };
+
+    /* ---------------- Theme ---------------- */
+    function applyTheme(theme) {
+      const isDark = theme === 'dark';
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      const m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', isDark ? '#0f1221' : '#f8f9fc');
+      document.querySelectorAll('.theme-icon-el').forEach((el) => el.setAttribute('data-lucide', isDark ? 'sun' : 'moon'));
+      document.querySelectorAll('.theme-label-el').forEach((el) => { el.textContent = isDark ? 'Светлая' : 'Тёмная'; });
+      try { localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light'); } catch (e) {}
+      if (window.lucide) window.lucide.createIcons();
+    }
+    function toggleTheme() { applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+
+    /* ---------------- Auth ---------------- */
+    function getAccounts() { try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]'); } catch (e) { return []; } }
+    function saveAccounts(list) { try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list)); } catch (e) {} }
+    function loadSession() { try { const r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+    function saveSession(u) { try { if (u) localStorage.setItem(SESSION_KEY, JSON.stringify(u)); else localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+    async function hashPassword(pw) {
+      try {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('aura_salt_' + pw));
+        return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+      } catch (e) { return btoa(unescape(encodeURIComponent(pw))); }
+    }
+    function setAuthMode(mode) {
+      state.authMode = mode;
+      const isReg = mode === 'register';
+      document.getElementById('authNameWrap').classList.toggle('hidden', !isReg);
+      document.getElementById('authSubmitBtn').textContent = isReg ? 'Создать аккаунт' : 'Войти';
+      document.getElementById('authTabLogin').className = !isReg ? 'py-2 rounded-[9px] text-[13px] font-semibold ios-card ios-text transition' : 'py-2 rounded-[9px] text-[13px] font-medium ios-sub transition';
+      document.getElementById('authTabRegister').className = isReg ? 'py-2 rounded-[9px] text-[13px] font-semibold ios-card ios-text transition' : 'py-2 rounded-[9px] text-[13px] font-medium ios-sub transition';
+      document.getElementById('authErrorMsg').classList.add('hidden');
+    }
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmailInput').value.trim().toLowerCase();
+      const pass = document.getElementById('authPasswordInput').value;
+      const name = document.getElementById('authNameInput').value.trim();
+      const err = document.getElementById('authErrorMsg'); err.classList.add('hidden');
+      if (!email || email.length < 2 || pass.length < 4) { err.textContent = 'Введите логин (от 2 симв.) и пароль (от 4 симв.).'; err.classList.remove('hidden'); return; }
+      const accounts = getAccounts(), passHash = await hashPassword(pass);
+      if (state.authMode === 'register') {
+        if (accounts.some((a) => a.email === email)) { err.textContent = 'Этот логин уже занят. Выберите другой или войдите.'; err.classList.remove('hidden'); return; }
+        const acc = { id: 'u_' + Date.now(), name: name || email.split('@')[0], email, passHash };
+        accounts.push(acc); saveAccounts(accounts);
+        await enterAppAsUser({ id: acc.id, name: acc.name, email: acc.email });
+        showToast(`Добро пожаловать, ${acc.name}`);
+      } else {
+        const found = accounts.find((a) => a.email === email);
+        if (!found) { err.textContent = 'Аккаунт не найден. Нажмите «Регистрация».'; err.classList.remove('hidden'); return; }
+        if (found.passHash !== passHash) { err.textContent = 'Неверный пароль.'; err.classList.remove('hidden'); return; }
+        await enterAppAsUser({ id: found.id, name: found.name, email: found.email });
+      }
+    }
+    async function enterAppAsUser(user) {
+      state.user = user; saveSession(user);
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('appShell').classList.remove('hidden');
+      const init = (user.name || 'A').trim().slice(0, 1).toUpperCase();
+      document.getElementById('headerAvatarInitials').textContent = init;
+      document.getElementById('profileAvatarBig').textContent = init;
+      document.getElementById('profileNameText').textContent = user.name;
+      document.getElementById('profileEmailText').textContent = user.email;
+      await loadDaysFromStorage();
+      loadCustomFilters();
+      setView('archive');
+      if (window.lucide) window.lucide.createIcons();
+      try { if (!localStorage.getItem(TUTORIAL_KEY)) setTimeout(() => openTutorial(0), 250); } catch (e) {}
+    }
+    function logoutUser() {
+      closeProfileSheet(); stopAllAudio(); stopVoiceover(); stopModalLoop(); stopPreviewLoop(); stopLifeReel();
+      state.user = null; state.days = []; saveSession(null);
+      document.getElementById('appShell').classList.add('hidden');
+      document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('authPasswordInput').value = '';
+    }
+
+    /* ---------------- IndexedDB ---------------- */
+    function userStorageKey() { return `aura_days_${state.user ? state.user.id : 'guest'}`; }
+    function openAuraDB() {
+      return new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) return reject(new Error('No IDB'));
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(IDB_STORE)) req.result.createObjectStore(IDB_STORE); };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    async function loadDaysFromStorage() {
+      const key = userStorageKey();
+      try {
+        const db = await openAuraDB();
+        const saved = await new Promise((res, rej) => { const tx = db.transaction(IDB_STORE, 'readonly'); const r = tx.objectStore(IDB_STORE).get(key); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+        if (Array.isArray(saved)) { state.days = saved; return; }
+      } catch (e) {}
+      try { const raw = localStorage.getItem(key); if (raw) { const p = JSON.parse(raw); if (Array.isArray(p)) { state.days = p; return; } } } catch (e) {}
+      state.days = [];
+    }
+    async function saveDaysToStorage() {
+      const key = userStorageKey();
+      try {
+        const db = await openAuraDB();
+        await new Promise((res, rej) => { const tx = db.transaction(IDB_STORE, 'readwrite'); tx.objectStore(IDB_STORE).put(state.days, key); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); });
+      } catch (e) {}
+      try { localStorage.setItem(key, JSON.stringify(state.days)); } catch (e) {}
+    }
+
+    /* ---------------- Media & Pixel Engine ---------------- */
+    const mediaCache = new Map(), painterlyCache = new Map();
+    function isVideoSrc(src) { return typeof src === 'string' && (src.startsWith('data:video') || src.includes('#video')); }
+    function loadMedia(src) {
+      if (mediaCache.has(src)) return mediaCache.get(src);
+      const p = new Promise((resolve) => {
+        if (isVideoSrc(src)) {
+          const v = document.createElement('video'); v.src = src.replace('#video', ''); v.muted = true; v.loop = true; v.playsInline = true; v.crossOrigin = 'anonymous';
+          v.onloadeddata = () => { v.play().catch(() => {}); resolve({ type: 'video', el: v, width: v.videoWidth || 640, height: v.videoHeight || 480 }); };
+          v.onerror = () => resolve(null);
+        } else {
+          const img = new Image(); img.crossOrigin = 'anonymous';
+          img.onload = () => resolve({ type: 'image', el: img, width: img.width, height: img.height });
+          img.onerror = () => resolve(null); img.src = src;
+        }
+      });
+      mediaCache.set(src, p); return p;
+    }
+    function getPainterlyCanvas(m, styleId) {
+      if (!m || m.type !== 'image') return null;
+      const key = `${m.el.src.slice(0, 64)}_${styleId}`;
+      if (painterlyCache.has(key)) return painterlyCache.get(key);
+      if (styleId !== 'monet' && styleId !== 'wabisabi') return null;
+      const c = document.createElement('canvas'); c.width = 360; c.height = 360;
+      const ctx = c.getContext('2d'); ctx.drawImage(m.el, 0, 0, 360, 360);
+      let imgData; try { imgData = ctx.getImageData(0, 0, 360, 360).data; } catch (e) { return null; }
+      if (styleId === 'monet') {
+        const out = document.createElement('canvas'); out.width = 360; out.height = 360;
+        const octx = out.getContext('2d'); octx.drawImage(m.el, 0, 0, 360, 360); octx.globalAlpha = 0.55;
+        for (let y = 4; y < 360; y += 7) {
+          for (let x = 4; x < 360; x += 7) {
+            const idx = (y * 360 + x) * 4;
+            octx.fillStyle = `rgb(${Math.min(255, imgData[idx] + 14)},${Math.min(255, imgData[idx + 1] + 8)},${Math.max(0, imgData[idx + 2] - 8)})`;
+            octx.save(); octx.translate(x + ((x * 13 + y * 7) % 5) - 2, y + ((x * 7 + y * 11) % 5) - 2);
+            octx.rotate(((x + y) % 10) * 0.12 - 0.5); octx.beginPath(); octx.ellipse(0, 0, 6.5, 3.2, 0, 0, Math.PI * 2); octx.fill(); octx.restore();
+          }
+        }
+        painterlyCache.set(key, out); return out;
+      }
+      for (let i = 0; i < imgData.length; i += 4) {
+        const lum = imgData[i] * 0.3 + imgData[i + 1] * 0.59 + imgData[i + 2] * 0.11;
+        imgData[i] = imgData[i] * 0.45 + lum * 0.55 + 6; imgData[i + 1] = imgData[i + 1] * 0.45 + lum * 0.55 + 4; imgData[i + 2] = imgData[i + 2] * 0.48 + lum * 0.52;
+      }
+      ctx.putImageData(new ImageData(imgData, 360, 360), 0, 0); painterlyCache.set(key, c); return c;
+    }
+    async function extractPaletteFromMedia(src) {
+      const m = await loadMedia(src); if (!m) return ['#c49a6c', '#5b6770', '#2b2d34', '#e5dfd5'];
+      const c = document.createElement('canvas'); c.width = 48; c.height = 48;
+      const ctx = c.getContext('2d'); ctx.drawImage(m.el, 0, 0, 48, 48);
+      let data; try { data = ctx.getImageData(0, 0, 48, 48).data; } catch (e) { return ['#c49a6c', '#5b6770', '#2b2d34', '#e5dfd5']; }
+      const buckets = new Map();
+      for (let i = 0; i < data.length; i += 4) { const k = `${Math.round(data[i] / 28) * 28},${Math.round(data[i + 1] / 28) * 28},${Math.round(data[i + 2] / 28) * 28}`; buckets.set(k, (buckets.get(k) || 0) + 1); }
+      const sorted = Array.from(buckets.entries()).sort((a, b) => b[1] - a[1]).map(([k]) => k.split(',').map(Number));
+      const chosen = [];
+      for (const rgb of sorted) { if (chosen.length >= 4) break; if (chosen.every((c2) => Math.hypot(rgb[0] - c2[0], rgb[1] - c2[1], rgb[2] - c2[2]) > 55)) chosen.push(rgb); }
+      while (chosen.length < 4 && sorted.length) chosen.push(sorted[chosen.length % sorted.length]);
+      return chosen.map(([r, g, b]) => '#' + [r, g, b].map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')).join(''));
+    }
+
+    function analyzeDayAtmosphere({ text, bpm, mode, genre, songTitle }) {
+      const t = (text || '').toLowerCase(), s = (songTitle || '').toLowerCase();
+      const score = (arr) => arr.reduce((a, w) => a + (t.includes(w) ? 1 : 0), 0);
+      let scores = {
+        monet: score(['какао', 'кофе', 'осень', 'жёлт', 'листья', 'парк', 'тепл', 'закат', 'уют', 'чай', 'вместе']) * 2.2,
+        kandinsky: score(['офис', 'сдач', 'дедлайн', 'проект', 'код', 'работ', 'срочн', 'хакатон', 'релиз', 'драйв']) * 2.4,
+        wabisabi: score(['тиш', 'рассвет', 'туман', 'озер', 'гор', 'зеркал', 'пирс', 'снег', 'утро', 'спокойн', 'лес']) * 2.3,
+        hockney: score(['солн', 'море', 'лет', 'бирюз', 'смея', 'набережн', 'пляж', 'ярко', 'весел', 'ледян', 'радост']) * 2.3,
+        hopper: score(['дожд', 'трамвай', 'мокр', 'фонар', 'груст', 'одинок', 'поезд', 'метро', 'полноч', 'стекл']) * 2.1
+      };
+      if (genre === 'jazz') scores.monet += 3.0; if (genre === 'electronic') scores.kandinsky += 3.5;
+      if (genre === 'ambient') scores.wabisabi += 3.4; if (genre === 'indie') scores.hockney += 3.0; if (genre === 'noir') scores.hopper += 3.2;
+      if (bpm >= 115) scores.kandinsky += 2.2; if (bpm >= 100 && mode === 'major') scores.hockney += 2.2; if (bpm <= 76 && mode === 'minor') scores.wabisabi += 1.8;
+      if (mode === 'major') { scores.hockney += 1.6; scores.monet += 0.8; } if (mode === 'minor') { scores.hopper += 0.9; scores.wabisabi += 0.7; }
+      if (s.includes('sinatra') || s.includes('autumn')) scores.monet += 2.0; if (s.includes('moderat') || s.includes('aphex')) scores.kandinsky += 2.0;
+      let bestStyle = 'monet', maxS = -1; for (const [k, v] of Object.entries(scores)) { if (v > maxS) { maxS = v; bestStyle = k; } }
+      const energy = Math.max(12, Math.min(96, Math.round(((bpm - 55) / 95) * 75 + (genre === 'electronic' ? 18 : 0) + scores.kandinsky * 4)));
+      const warmth = Math.max(15, Math.min(95, Math.round(50 + (mode === 'major' ? 18 : -10) + scores.monet * 7 + scores.hockney * 6 - scores.kandinsky * 6)));
+      const focus = Math.max(18, Math.min(96, Math.round(35 + scores.kandinsky * 11 + scores.wabisabi * 6 + (bpm > 115 ? 14 : 0))));
+      const air = Math.max(15, Math.min(96, Math.round(100 - energy * 0.7 + (mode === 'minor' ? 12 : -5) + scores.wabisabi * 5)));
+      const moodMap = { monet: 'Тёплая ностальгия', kandinsky: 'Собранный драйв', wabisabi: 'Ясная тишина', hockney: 'Солнечная лёгкость', hopper: 'Вечерняя глубина' };
+      return { styleId: bestStyle, moodLabel: moodMap[bestStyle], metrics: { warmth, energy, focus, air } };
+    }
+
+    function generateFolderTitle(text) {
+      const clean = (text || '').trim(); if (!clean) return 'Новый день';
+      const words = clean.replace(/[«»"().,!?;:—–-]+/g, ' ').split(/\s+/).filter(Boolean);
+      const raw = words.slice(0, Math.min(5, Math.max(3, words.length))).join(' ');
+      return raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : 'Запись дня';
+    }
+
+    function buildExplainability(day) {
+      const style = ART_STYLES[day.styleId] || ART_STYLES.monet;
+      return [
+        { icon: 'file-text', title: 'Текст → Стиль', body: `Запись определила настроение «${day.moodLabel}» и стиль «${style.name}».` },
+        { icon: 'palette', title: 'Фото → Палитра', body: `Из пикселей извлечены 4 цвета (${day.palette.join(', ')}).` },
+        { icon: 'music', title: 'Музыка → Ритм', body: `Темп ${day.song.bpm} BPM (${day.song.mode === 'minor' ? 'минор' : 'мажор'}) задаёт дыхание кадра.` },
+        { icon: 'mic', title: 'Живой голос', body: day.voiceNoteUrl ? 'Сохранена ваша собственная голосовая заметка.' : 'Голосовая заметка не добавлена.' }
+      ];
+    }
+
+    /* ---------------- Canvas Print Renderer ---------------- */
+    let activeAudioLevel = 0;
+    function drawEditorialMemory(canvas, day, timeSec, loadedMedia, showOriginal = false) {
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      const W = canvas.width, H = canvas.height;
+      const u = W / 720; // Responsive resolution multiplier (1.5x at 1080x1350 HD)
+      const style = ART_STYLES[day.styleId] || ART_STYLES.monet;
+      const palette = (day.palette && day.palette.length >= 4) ? day.palette : ['#d8973c', '#8c5323', '#3b2818', '#f0d29c'];
+      const bpm = day.song.bpm || 84, beatPhase = (timeSec * (bpm / 60)) % 1, beatPulse = Math.pow(1 - beatPhase, 3) * (0.35 + activeAudioLevel * 0.65);
+
+      ctx.fillStyle = showOriginal ? '#ffffff' : style.matBg;
+      ctx.fillRect(0, 0, W, H);
+      const pad = 42 * u, frameX = pad, frameY = 48 * u, frameW = W - pad * 2, frameH = 660 * u;
+      ctx.save(); roundRectPath(ctx, frameX, frameY, frameW, frameH, 10 * u); ctx.clip();
+
+      const validMedia = (loadedMedia || []).filter(Boolean);
+      if (validMedia.length > 0) {
+        const slideDur = style.id === 'kandinsky' ? 3.5 : (style.id === 'wabisabi' ? 7.0 : 5.5);
+        const idx = Math.floor(timeSec / slideDur) % validMedia.length, nextIdx = (idx + 1) % validMedia.length;
+        const localT = (timeSec % slideDur) / slideDur, fadeW = style.id === 'kandinsky' ? 0.12 : 0.28;
+        const drawItem = (m, alpha, off) => {
+          ctx.save(); ctx.globalAlpha = alpha;
+          const amp = showOriginal ? 0 : (style.id === 'wabisabi' ? 0.015 : (style.id === 'kandinsky' ? 0.035 : 0.025));
+          const scale = showOriginal ? 1.0 : (1.03 + Math.sin(timeSec * (bpm / 220) + off) * amp + beatPulse * 0.01);
+          const panX = showOriginal ? 0 : Math.cos(timeSec * 0.22 + off) * 8 * u, panY = showOriginal ? 0 : Math.sin(timeSec * 0.18 + off) * 6 * u;
+          // Always draw full-resolution native photo/video — ZERO downscale blur!
+          const srcEl = m.el;
+          const sw = m.width || srcEl.naturalWidth || srcEl.videoWidth || 1000;
+          const sh = m.height || srcEl.naturalHeight || srcEl.videoHeight || 750;
+          const imgR = sw / sh, boxR = frameW / frameH;
+          let dw, dh; if (imgR > boxR) { dh = frameH * scale; dw = dh * imgR; } else { dw = frameW * scale; dh = dw / imgR; }
+          if (!showOriginal) {
+            if (style.id === 'monet') ctx.filter = 'saturate(1.14) contrast(1.02) sepia(0.10)';
+            else if (style.id === 'kandinsky') ctx.filter = 'contrast(1.20) saturate(0.86) brightness(0.96)';
+            else if (style.id === 'wabisabi') ctx.filter = 'saturate(0.76) contrast(0.96) brightness(1.02)';
+            else if (style.id === 'hockney') ctx.filter = 'saturate(1.24) contrast(1.06) brightness(1.03)';
+            else ctx.filter = 'contrast(1.18) saturate(0.82) brightness(0.90)';
+          }
+          ctx.drawImage(srcEl, frameX + (frameW - dw) / 2 + panX, frameY + (frameH - dh) / 2 + panY, dw, dh);
+          ctx.filter = 'none'; ctx.restore();
+        };
+        drawItem(validMedia[idx], 1, idx * 2.1);
+        if (!showOriginal && validMedia.length > 1 && localT > 1 - fadeW) drawItem(validMedia[nextIdx], (localT - (1 - fadeW)) / fadeW, nextIdx * 2.1);
+      } else {
+        ctx.fillStyle = '#e5e5ea'; ctx.fillRect(frameX, frameY, frameW, frameH);
+        ctx.fillStyle = '#636366'; ctx.font = `600 ${22 * u}px -apple-system, sans-serif`; ctx.textAlign = 'center';
+        ctx.fillText('Добавьте фото или видео', frameX + frameW / 2, frameY + frameH / 2 - 4 * u);
+        ctx.font = `400 ${15 * u}px -apple-system, sans-serif`;
+        ctx.fillText('Нажмите «+ Фото / Видео» ниже', frameX + frameW / 2, frameY + frameH / 2 + 26 * u);
+        ctx.textAlign = 'left';
+      }
+
+      if (!showOriginal && validMedia.length > 0) {
+        if (style.id === 'monet') {
+          const g = ctx.createRadialGradient(frameX + frameW * 0.65, frameY + frameH * 0.25, 20 * u, frameX + frameW * 0.5, frameY + frameH * 0.5, frameW * 0.9);
+          g.addColorStop(0, hexToRgba(palette[3], 0.18 + beatPulse * 0.06)); g.addColorStop(1, 'rgba(35,18,8,0.18)');
+          ctx.fillStyle = g; ctx.fillRect(frameX, frameY, frameW, frameH);
+        } else if (style.id === 'kandinsky') {
+          ctx.strokeStyle = 'rgba(180,220,255,0.14)'; ctx.lineWidth = 1 * u;
+          for (let x = frameX + 64 * u; x < frameX + frameW; x += 64 * u) { ctx.beginPath(); ctx.moveTo(x, frameY); ctx.lineTo(x, frameY + frameH); ctx.stroke(); }
+          ctx.strokeStyle = hexToRgba(palette[2], 0.6 + beatPulse * 0.3); ctx.lineWidth = 2.2 * u;
+          const sh = Math.sin(timeSec * (bpm / 60) * 1.2) * 24 * u;
+          ctx.beginPath(); ctx.moveTo(frameX + 28 * u, frameY + frameH - 70 * u + sh); ctx.lineTo(frameX + frameW - 36 * u, frameY + 90 * u - sh); ctx.stroke();
+          ctx.beginPath(); ctx.arc(frameX + frameW * 0.78, frameY + frameH * 0.22, (32 + beatPulse * 24) * u, 0, Math.PI * 2); ctx.stroke();
+        } else if (style.id === 'wabisabi') {
+          ctx.fillStyle = 'rgba(196,72,58,0.85)'; ctx.fillRect(frameX + frameW - 42 * u, frameY + 24 * u, 16 * u, 16 * u);
+        } else if (style.id === 'hockney') {
+          ctx.strokeStyle = hexToRgba('#ffffff', 0.35 + beatPulse * 0.2); ctx.lineWidth = 2.2 * u;
+          for (let i = 0; i < 5; i++) {
+            const y = frameY + frameH * 0.66 + i * 26 * u; ctx.beginPath();
+            for (let x = frameX + 20 * u; x <= frameX + frameW - 20 * u; x += 24 * u) { const w = Math.sin(x * 0.04 / u + timeSec * 2.2 + i) * 4.5 * u; if (x === frameX + 20 * u) ctx.moveTo(x, y + w); else ctx.lineTo(x, y + w); }
+            ctx.stroke();
+          }
+        } else {
+          ctx.strokeStyle = 'rgba(220,235,245,0.24)'; ctx.lineWidth = 1.2 * u;
+          for (let i = 0; i < 24; i++) { const rx = frameX + ((i * 37 * u) % frameW), ry = frameY + ((timeSec * 140 * u + i * 71 * u) % frameH); ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 4 * u, ry + 18 * u); ctx.stroke(); }
+        }
+        const vig = ctx.createRadialGradient(frameX + frameW / 2, frameY + frameH / 2, frameW * 0.32, frameX + frameW / 2, frameY + frameH / 2, frameH * 0.72);
+        vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, `rgba(0,0,0,${style.vignette})`);
+        ctx.fillStyle = vig; ctx.fillRect(frameX, frameY, frameW, frameH);
+      }
+      ctx.restore();
+
+      const footY = frameY + frameH + 46 * u;
+      ctx.fillStyle = showOriginal ? '#111113' : style.matInk;
+      ctx.font = style.fontMode === 'sans-bold' ? `600 ${28 * u}px -apple-system, sans-serif` : `400 ${30 * u}px Georgia, serif`;
+      drawWrappedText(ctx, day.folderTitle || 'Новый день', frameX, footY, frameW - 95 * u, 34 * u, 1);
+      palette.slice(0, 4).forEach((col, i) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(W - pad - (3 - i) * 18 * u - 6 * u, footY - 8 * u, 5 * u, 0, Math.PI * 2); ctx.fill(); });
+      ctx.fillStyle = showOriginal ? '#636366' : style.matMuted;
+      ctx.font = `400 ${16 * u}px -apple-system, sans-serif`;
+      drawWrappedText(ctx, `${formatDateRu(day.date)}${day.place ? ' · ' + day.place : ''} · ${day.song.title || 'Без трека'}`, frameX, footY + 34 * u, frameW, 22 * u, 1);
+    }
+
+    function roundRectPath(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+    function drawWrappedText(ctx, text, x, y, maxW, lh, maxL) {
+      const words = String(text).split(' '); let line = '', lines = [];
+      for (let i = 0; i < words.length; i++) {
+        const test = line ? line + ' ' + words[i] : words[i];
+        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = words[i]; if (lines.length >= maxL) break; } else line = test;
+      }
+      if (lines.length < maxL && line) lines.push(line);
+      if (lines.length === maxL && words.join(' ').length > lines.join(' ').length + 3) lines[maxL - 1] = lines[maxL - 1].replace(/\s+\S*$/, '') + '…';
+      lines.forEach((l, i) => ctx.fillText(l, x, y + i * lh));
+    }
+    function hexToRgba(hex, a) { const c = (hex || '#ffffff').replace('#', ''), n = parseInt(c.length === 3 ? c.split('').map(x => x + x).join('') : c, 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; }
+    function formatDateRu(iso) { if (!iso) return ''; const m = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']; const p = iso.split('-'); return p.length === 3 ? `${parseInt(p[2], 10)} ${m[parseInt(p[1], 10) - 1] || p[1]} ${p[0]}` : iso; }
+
+    /* ---------------- Video Export ---------------- */
+    function recordCanvasVideo(canvas, durationMs, filename, onProgress, onDone) {
+      if (!canvas || typeof canvas.captureStream !== 'function' || typeof MediaRecorder === 'undefined') { showToast('Запись видео недоступна — сохраните PNG'); if (onDone) onDone(); return; }
+      try {
+        const stream = canvas.captureStream(30);
+        const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '');
+        const rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+        const chunks = []; rec.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+        rec.onstop = () => {
+          const url = URL.createObjectURL(new Blob(chunks, { type: mime || 'video/webm' }));
+          const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 4000); showToast('Видео сохранено (.webm)'); if (onDone) onDone();
+        };
+        rec.start(); let left = Math.ceil(durationMs / 1000); if (onProgress) onProgress(left);
+        const t = setInterval(() => { left--; if (left > 0 && onProgress) onProgress(left); }, 1000);
+        setTimeout(() => { clearInterval(t); if (rec.state !== 'inactive') rec.stop(); }, durationMs);
+      } catch (e) { showToast('Не удалось записать видео'); if (onDone) onDone(); }
+    }
+
+    /* ---------------- Music & Real Microphone Voice Recorder ---------------- */
+    let audioCtx = null, musicInterval = null, activeHtmlAudio = null, isMusicPlaying = false;
+    let micRecorder = null, micStream = null, micChunks = [], micTimerInt = null, micSeconds = 0, isRecordingVoice = false;
+
+    function stopAllAudio() {
+      if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
+      if (activeHtmlAudio) { activeHtmlAudio.pause(); activeHtmlAudio.currentTime = 0; activeHtmlAudio = null; }
+      isMusicPlaying = false; activeAudioLevel = 0; updateMusicPlayButton();
+      const rm = document.getElementById('reelMusicLabel'); if (rm) rm.textContent = 'Музыка';
+    }
+    function stopVoiceover() {
+      const mA = document.getElementById('modalVoiceAudio'); if (mA) { mA.pause(); mA.currentTime = 0; }
+      const dA = document.getElementById('draftVoiceAudio'); if (dA) { dA.pause(); dA.currentTime = 0; }
+      if (isRecordingVoice && micRecorder && micRecorder.state !== 'inactive') { try { micRecorder.stop(); } catch (e) {} }
+    }
+    function formatSec(sec) { return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; }
+    function updateDraftVoiceUI() {
+      const wrap = document.getElementById('draftVoicePlayerWrap'), audioEl = document.getElementById('draftVoiceAudio');
+      const sub = document.getElementById('draftVoiceSub'), recBtn = document.getElementById('recordVoiceBtn'), recLbl = document.getElementById('recordVoiceLabel'), timerEl = document.getElementById('voiceRecTimer');
+      if (isRecordingVoice) {
+        if (recBtn) recBtn.className = 'px-3.5 py-1.5 rounded-full bg-red-500 text-white text-xs font-semibold press-scale';
+        if (recLbl) recLbl.textContent = 'Стоп';
+        if (timerEl) { timerEl.classList.remove('hidden'); timerEl.textContent = formatSec(micSeconds); }
+        if (sub) sub.textContent = 'Идёт запись вашего голоса...';
+      } else {
+        if (recBtn) recBtn.className = 'px-3.5 py-1.5 rounded-full ios-fill text-xs font-semibold ios-text press-scale';
+        if (recLbl) recLbl.textContent = state.draft.voiceNoteUrl ? 'Заново' : 'Записать';
+        if (timerEl) timerEl.classList.add('hidden');
+        if (sub) sub.textContent = state.draft.voiceNoteUrl ? `Записано (${state.draft.voiceNoteDuration})` : 'Ваш голос · по желанию (до 2 мин)';
+      }
+      if (wrap && audioEl) {
+        if (state.draft.voiceNoteUrl && !isRecordingVoice) { audioEl.src = state.draft.voiceNoteUrl; wrap.classList.remove('hidden'); }
+        else wrap.classList.add('hidden');
+      }
+    }
+    async function toggleMicRecording() {
+      if (isRecordingVoice) { if (micRecorder && micRecorder.state !== 'inactive') micRecorder.stop(); return; }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') { showToast('Микрофон недоступен в этом браузере'); return; }
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true }); micChunks = []; micSeconds = 0;
+        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+        micRecorder = mime ? new MediaRecorder(micStream, { mimeType: mime }) : new MediaRecorder(micStream);
+        micRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) micChunks.push(e.data); };
+        micRecorder.onstop = () => {
+          isRecordingVoice = false; if (micTimerInt) { clearInterval(micTimerInt); micTimerInt = null; }
+          if (micStream) { micStream.getTracks().forEach((t) => t.stop()); micStream = null; }
+          const r = new FileReader(); r.onloadend = () => { state.draft.voiceNoteUrl = r.result; state.draft.voiceNoteDuration = formatSec(Math.max(1, micSeconds)); updateDraftVoiceUI(); showToast('Голос записан'); };
+          r.readAsDataURL(new Blob(micChunks, { type: mime || 'audio/webm' }));
+        };
+        micRecorder.start(); isRecordingVoice = true; updateDraftVoiceUI();
+        micTimerInt = setInterval(() => { micSeconds++; const t = document.getElementById('voiceRecTimer'); if (t) t.textContent = formatSec(micSeconds); if (micSeconds >= 120 && micRecorder && micRecorder.state !== 'inactive') micRecorder.stop(); }, 1000);
+      } catch (e) { showToast('Разрешите доступ к микрофону'); }
+    }
+    function playPreviewUrl(url) {
+      stopAllAudio(); if (!url) return;
+      activeHtmlAudio = new Audio(url); activeHtmlAudio.play().catch(() => {});
+      activeHtmlAudio.onended = () => { isMusicPlaying = false; activeAudioLevel = 0; updateMusicPlayButton(); };
+      isMusicPlaying = true; activeAudioLevel = 0.72; updateMusicPlayButton();
+    }
+    function toggleMusicForDay(day) {
+      if (isMusicPlaying) { stopAllAudio(); return; }
+      const realAudio = day.song.customAudioUrl || day.song.previewUrl;
+      if (realAudio) { activeHtmlAudio = new Audio(realAudio); activeHtmlAudio.loop = true; activeHtmlAudio.play().catch(() => {}); isMusicPlaying = true; activeAudioLevel = 0.72; updateMusicPlayButton(); return; }
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      if (!audioCtx) audioCtx = new AC(); if (audioCtx.state === 'suspended') audioCtx.resume();
+      isMusicPlaying = true; updateMusicPlayButton();
+      const bpm = day.song.bpm || 84, stepMs = (60 / bpm) * 1000, genre = day.song.genre || 'jazz';
+      const chords = day.song.mode === 'minor' ? [[220, 261.63, 329.63, 392], [174.61, 220, 261.63, 329.63]] : [[261.63, 329.63, 392, 493.88], [220, 261.63, 329.63, 392]];
+      let step = 0;
+      const playStep = () => {
+        if (!isMusicPlaying || !audioCtx) return;
+        const now = audioCtx.currentTime, chord = chords[Math.floor(step / 4) % chords.length];
+        activeAudioLevel = 0.85; setTimeout(() => { activeAudioLevel = 0.22; }, Math.min(240, stepMs * 0.4));
+        if (step % 4 === 0) {
+          chord.forEach((freq) => {
+            const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+            osc.type = genre === 'electronic' ? 'sawtooth' : 'sine'; osc.frequency.setValueAtTime(freq, now);
+            g.gain.setValueAtTime(0.001, now); g.gain.linearRampToValueAtTime(0.03, now + 0.06); g.gain.exponentialRampToValueAtTime(0.001, now + (stepMs * 3.6) / 1000);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + (stepMs * 3.8) / 1000);
+          });
+        }
+        step++;
+      };
+      playStep(); musicInterval = setInterval(playStep, stepMs);
+    }
+    function updateMusicPlayButton() {
+      const btn = document.getElementById('toggleMusicBtn'); if (!btn) return;
+      btn.innerHTML = isMusicPlaying ? '<i data-lucide="pause" class="w-4 h-4"></i>' : '<i data-lucide="play" class="w-4 h-4 ml-0.5"></i>';
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    /* ---------------- Sheets & Tutorial ---------------- */
+    let tutorialStepIdx = 0;
+    function setBodyScrollLock(locked) { document.body.style.overflow = locked ? 'hidden' : ''; }
+    function customFiltersKey() { return `aura_filters_${state.user ? state.user.id : 'guest'}`; }
+    function loadCustomFilters() {
+      try { const r = localStorage.getItem(customFiltersKey()); state.customFilters = r ? JSON.parse(r) : []; }
+      catch (e) { state.customFilters = []; }
+    }
+    function saveCustomFilters() {
+      try { localStorage.setItem(customFiltersKey(), JSON.stringify(state.customFilters)); } catch (e) {}
+    }
+
+    function openCustomFilterModal() {
+      renderExistingCustomFilters();
+      const m = document.getElementById('customFilterModal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      setBodyScrollLock(true);
+      setTimeout(() => document.getElementById('newFilterNameInput')?.focus(), 70);
+    }
+    function closeCustomFilterModal() {
+      const m = document.getElementById('customFilterModal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+      if (!state.activeDayId && !lifeReelOpen) setBodyScrollLock(false);
+    }
+    function renderExistingCustomFilters() {
+      const wrap = document.getElementById('existingCustomFiltersWrap');
+      const list = document.getElementById('existingCustomFiltersList');
+      wrap.classList.toggle('hidden', !state.customFilters.length);
+      list.innerHTML = state.customFilters.map((f) => `
+        <div class="ios-row">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background:${f.color}"></span>
+            <span class="text-[14px] font-medium ios-text truncate">${escapeHtml(f.name)}</span>
+          </div>
+          <button type="button" data-del-filter="${f.id}" class="del-custom-filter text-xs font-semibold text-red-500 px-2 py-1">Удалить</button>
+        </div>
+      `).join('');
+      list.querySelectorAll('.del-custom-filter').forEach((b) => b.addEventListener('click', () => {
+        const id = b.dataset.delFilter;
+        state.customFilters = state.customFilters.filter((x) => x.id !== id);
+        state.draft.customFilterIds = state.draft.customFilterIds.filter((x) => x !== id);
+        if (state.filterStyle === 'custom:' + id) state.filterStyle = 'all';
+        saveCustomFilters(); renderExistingCustomFilters(); renderCustomFilterChips(); renderComposerCustomFilters(); renderArchive();
+        showToast('Фильтр удалён');
+      }));
+    }
+    function renderCustomFilterChips() {
+      const wrap = document.getElementById('customFilterChipsWrap');
+      if (!wrap) return;
+      wrap.innerHTML = state.customFilters.map((f) => {
+        const key = 'custom:' + f.id;
+        const active = state.filterStyle === key;
+        return `<button type="button" data-filter="${key}" class="custom-filter-pill shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${active ? 'ios-btn-primary' : 'ios-card ios-text'}"><span class="w-2 h-2 rounded-full" style="background:${f.color}"></span><span>${escapeHtml(f.name)}</span></button>`;
+      }).join('');
+      wrap.querySelectorAll('.custom-filter-pill').forEach((b) => b.addEventListener('click', () => {
+        state.filterStyle = b.dataset.filter;
+        renderArchive();
+      }));
+    }
+    function renderComposerCustomFilters() {
+      const row = document.getElementById('composerCustomFiltersRow');
+      if (!row) return;
+      if (!state.customFilters.length) { row.innerHTML = ''; return; }
+      row.innerHTML = state.customFilters.map((f) => {
+        const sel = state.draft.customFilterIds.includes(f.id);
+        return `<button type="button" data-toggle-cf="${f.id}" class="cf-pick-btn px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${sel ? 'ios-btn-primary' : 'ios-fill ios-text'}"><span class="w-2 h-2 rounded-full" style="background:${f.color}"></span><span>${escapeHtml(f.name)}</span></button>`;
+      }).join('');
+      row.querySelectorAll('.cf-pick-btn').forEach((b) => b.addEventListener('click', () => {
+        const id = b.dataset.toggleCf;
+        if (state.draft.customFilterIds.includes(id)) state.draft.customFilterIds = state.draft.customFilterIds.filter((x) => x !== id);
+        else state.draft.customFilterIds.push(id);
+        renderComposerCustomFilters();
+      }));
+    }
+
+    function getTutorialAnimationHTML(idx) {
+      if (idx === 0) {
+        return `
+          <div class="tut-float w-44 ios-card rounded-[16px] p-2.5 shadow-md space-y-2 text-left">
+            <div class="h-20 rounded-[10px] bg-gradient-to-br from-amber-300 via-orange-300 to-rose-300 relative overflow-hidden">
+              <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-black/60 text-white text-[9px] font-mono-num">1 / 5</span>
+            </div>
+            <div class="space-y-1.5 px-0.5">
+              <div class="h-2 rounded-full ios-btn-primary tut-type"></div>
+              <div class="h-1.5 w-2/3 rounded-full ios-fill"></div>
+            </div>
+          </div>`;
+      }
+      if (idx === 1) {
+        return `
+          <div class="w-56 ios-card rounded-[16px] p-3 shadow-md flex items-center gap-3">
+            <div class="w-11 h-11 rounded-[10px] bg-[#1db954] text-white flex items-center justify-center shrink-0">
+              <i data-lucide="music" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0 text-left space-y-1">
+              <div class="text-xs font-bold ios-text truncate">Spotify · Яндекс</div>
+              <div class="text-[10px] ios-muted">Ритм под BPM трека</div>
+            </div>
+            <div class="flex items-end gap-1 h-7 shrink-0">
+              <span class="tut-eq w-1 h-full rounded-full bg-[#1db954]" style="animation-delay:0s"></span>
+              <span class="tut-eq w-1 h-full rounded-full bg-[#1db954]" style="animation-delay:0.2s"></span>
+              <span class="tut-eq w-1 h-full rounded-full bg-[#1db954]" style="animation-delay:0.4s"></span>
+              <span class="tut-eq w-1 h-full rounded-full bg-[#1db954]" style="animation-delay:0.15s"></span>
+            </div>
+          </div>`;
+      }
+      if (idx === 2) {
+        return `
+          <div class="flex flex-col items-center gap-3">
+            <div class="relative flex items-center justify-center">
+              <span class="tut-ring absolute w-14 h-14 rounded-full bg-red-500/35"></span>
+              <div class="relative w-14 h-14 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg">
+                <i data-lucide="mic" class="w-6 h-6"></i>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 ios-card px-3 py-1 rounded-full text-[11px] font-mono-num ios-text">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>
+              <span>00:12 · Ваш живой голос</span>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="tut-float w-32 aspect-4-5 ios-card rounded-[14px] p-2 shadow-lg flex flex-col justify-between relative overflow-hidden">
+          <div class="flex-1 rounded-[8px] bg-gradient-to-br from-sky-400 via-indigo-500 to-amber-300 relative overflow-hidden">
+            <div class="tut-scan absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/45 to-transparent"></div>
+          </div>
+          <div class="pt-1.5 flex items-center justify-between">
+            <div class="h-1.5 w-12 rounded-full ios-btn-primary"></div>
+            <div class="flex gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span><span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span></div>
+          </div>
+        </div>`;
+    }
+
+    function renderTutorialStep() {
+      const s = TUTORIAL_STEPS[tutorialStepIdx];
+      document.getElementById('tutStepTag').textContent = `Шаг ${tutorialStepIdx + 1} из ${TUTORIAL_STEPS.length}`;
+      document.getElementById('tutTitle').textContent = s.title;
+      document.getElementById('tutDesc').textContent = s.desc;
+      document.getElementById('tutAnimStage').innerHTML = getTutorialAnimationHTML(tutorialStepIdx);
+      document.getElementById('tutDots').innerHTML = TUTORIAL_STEPS.map((_, i) => `<span class="h-1.5 rounded-full transition-all ${i === tutorialStepIdx ? 'w-6 ios-btn-primary' : 'w-1.5 ios-fill'}"></span>`).join('');
+      document.getElementById('tutPrevBtn').classList.toggle('hidden', tutorialStepIdx === 0);
+      document.getElementById('tutNextBtn').textContent = tutorialStepIdx === TUTORIAL_STEPS.length - 1 ? (state.days.length === 0 ? 'Создать запись' : 'Готово') : 'Далее';
+      if (window.lucide) window.lucide.createIcons();
+    }
+    function openTutorial(i = 0) { tutorialStepIdx = i; renderTutorialStep(); const m = document.getElementById('tutorialModal'); m.classList.remove('hidden'); m.classList.add('flex'); setBodyScrollLock(true); }
+    function closeTutorial(goCreate = false) { try { localStorage.setItem(TUTORIAL_KEY, '1'); } catch (e) {} const m = document.getElementById('tutorialModal'); m.classList.add('hidden'); m.classList.remove('flex'); if (!state.activeDayId && !lifeReelOpen) setBodyScrollLock(false); if (goCreate) setView('create'); }
+    function openProfileSheet() { document.getElementById('profileStatsText').textContent = `${state.days.length} / 50 дней сохранено`; const s = document.getElementById('profileSheet'); s.classList.remove('hidden'); s.classList.add('flex'); setBodyScrollLock(true); }
+    function closeProfileSheet() { const s = document.getElementById('profileSheet'); s.classList.add('hidden'); s.classList.remove('flex'); if (!state.activeDayId && !lifeReelOpen) setBodyScrollLock(false); }
+
+    /* ---------------- Spotify / Yandex / Search ---------------- */
+    function parseSpotifyTrackId(i) { if (!i) return null; const m = i.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?track\/([A-Za-z0-9]{22})/) || i.match(/spotify:track:([A-Za-z0-9]{22})/); return m ? m[1] : null; }
+    function parseYandexMusicTrack(i) { if (!i) return null; const m = i.match(/music\.yandex\.[a-z]+\/album\/(\d+)\/track\/(\d+)/); return m ? { albumId: m[1], trackId: m[2] } : null; }
+    function inferMusicParamsFromGenre(gStr) { const g = (gStr || '').toLowerCase(); if (g.includes('electronic') || g.includes('dance')) return { genre: 'electronic', bpm: 126, mode: 'minor' }; if (g.includes('classical') || g.includes('ambient')) return { genre: 'ambient', bpm: 70, mode: 'minor' }; if (g.includes('pop') || g.includes('rock') || g.includes('indie')) return { genre: 'indie', bpm: 110, mode: 'major' }; return { genre: 'jazz', bpm: 84, mode: 'minor' }; }
+    function openMusicSheet() { const s = document.getElementById('musicSheet'); s.classList.remove('hidden'); s.classList.add('flex'); setBodyScrollLock(true); setMusicSheetTab('search'); renderCuratedSpotifyTracks(); }
+    function closeMusicSheet() { stopAllAudio(); const s = document.getElementById('musicSheet'); s.classList.add('hidden'); s.classList.remove('flex'); if (!state.activeDayId && !lifeReelOpen) setBodyScrollLock(false); }
+    function setMusicSheetTab(tab) {
+      state.musicSheetTab = tab;
+      document.getElementById('musicPanelSearch').classList.toggle('hidden', tab !== 'search');
+      document.getElementById('musicPanelSpotifyLink').classList.toggle('hidden', tab !== 'link');
+      document.getElementById('musicPanelUpload').classList.toggle('hidden', tab !== 'upload');
+      const map = { search: 'musicTabSearch', link: 'musicTabSpotifyLink', upload: 'musicTabUpload' };
+      Object.entries(map).forEach(([k, id]) => { document.getElementById(id).className = k === tab ? 'music-tab py-1.5 rounded-[9px] text-xs font-semibold ios-card ios-text transition' : 'music-tab py-1.5 rounded-[9px] text-xs font-medium ios-sub transition'; });
+    }
+    function renderCuratedSpotifyTracks() {
+      document.getElementById('musicSearchStatus').textContent = 'Треки Spotify или введите любую песню выше:';
+      const list = document.getElementById('musicResultsList');
+      list.innerHTML = CURATED_SPOTIFY_TRACKS.map((t, i) => `
+        <div class="ios-card rounded-[14px] p-3 flex items-center justify-between gap-3">
+          <div class="min-w-0"><div class="text-sm font-semibold ios-text truncate">${escapeHtml(t.trackName)}</div><div class="text-xs ios-muted truncate">${escapeHtml(t.artist)} · ${t.tag}</div></div>
+          <button type="button" data-curated-idx="${i}" class="pick-curated-btn px-3.5 py-1.5 rounded-full bg-[#1db954] text-white text-xs font-semibold shrink-0">Выбрать</button>
+        </div>
+      `).join('');
+      list.querySelectorAll('.pick-curated-btn').forEach((b) => b.addEventListener('click', () => {
+        const t = CURATED_SPOTIFY_TRACKS[Number(b.dataset.curatedIdx)];
+        applyTrackToDraft({ title: t.title, url: t.url, spotifyId: t.spotifyId, yandexMusic: null, previewUrl: null, artworkUrl: null, bpm: t.bpm, mode: t.mode, genre: t.genre });
+        closeMusicSheet(); showToast(`Выбрано: ${t.trackName}`);
+      }));
+    }
+    async function runLiveMusicSearch() {
+      const q = document.getElementById('liveMusicSearchInput').value.trim(); if (!q) { renderCuratedSpotifyTracks(); return; }
+      const st = document.getElementById('musicSearchStatus'), list = document.getElementById('musicResultsList'); st.textContent = `Ищем «${q}»...`; list.innerHTML = '';
+      try {
+        const resp = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=8`);
+        if (!resp.ok) throw new Error('err');
+        const items = (await resp.json()).results || [];
+        if (!items.length) { st.textContent = 'Ничего не нашлось'; return; }
+        st.textContent = `Найдено: ${items.length}`;
+        list.innerHTML = items.map((item, idx) => `
+          <div class="ios-card rounded-[14px] p-2.5 flex items-center justify-between gap-2.5">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <img src="${escapeHtml(item.artworkUrl100 || '')}" alt="" class="w-11 h-11 rounded-[10px] object-cover shrink-0 ios-fill" />
+              <div class="min-w-0"><div class="text-sm font-semibold ios-text truncate">${escapeHtml(item.trackName)}</div><div class="text-xs ios-muted truncate">${escapeHtml(item.artistName)}</div></div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${item.previewUrl ? `<button type="button" data-preview-url="${escapeHtml(item.previewUrl)}" aria-label="Слушать" class="play-preview-btn w-8 h-8 rounded-full ios-fill flex items-center justify-center ios-text"><i data-lucide="play" class="w-3.5 h-3.5 ml-0.5"></i></button>` : ''}
+              <button type="button" data-result-idx="${idx}" class="pick-live-btn px-3 py-1.5 rounded-full ios-btn-primary text-xs font-semibold">Выбрать</button>
+            </div>
+          </div>
+        `).join('');
+        list.querySelectorAll('.play-preview-btn').forEach((b) => b.addEventListener('click', () => playPreviewUrl(b.dataset.previewUrl)));
+        list.querySelectorAll('.pick-live-btn').forEach((b) => b.addEventListener('click', () => {
+          const item = items[Number(b.dataset.resultIdx)], inf = inferMusicParamsFromGenre(item.primaryGenreName), full = `${item.artistName} — ${item.trackName}`;
+          applyTrackToDraft({ title: full, url: `https://open.spotify.com/search/${encodeURIComponent(full)}`, spotifyId: null, yandexMusic: null, previewUrl: item.previewUrl || null, artworkUrl: item.artworkUrl100 || null, bpm: inf.bpm, mode: inf.mode, genre: inf.genre });
+          closeMusicSheet(); showToast(`Выбрано: ${item.trackName}`);
+        }));
+        if (window.lucide) window.lucide.createIcons();
+      } catch (e) { st.textContent = 'Онлайн-поиск недоступен — выберите трек ниже или вставьте ссылку.'; renderCuratedSpotifyTracks(); }
+    }
+    async function applySpotifyLink() {
+      const raw = document.getElementById('spotifyUrlInput').value.trim(), customTitle = (document.getElementById('customLinkTitleInput')?.value || '').trim();
+      const spId = parseSpotifyTrackId(raw), ym = parseYandexMusicTrack(raw);
+      if (ym) {
+        applyTrackToDraft({ title: customTitle || `Яндекс Музыка #${ym.trackId}`, url: `https://music.yandex.ru/album/${ym.albumId}/track/${ym.trackId}`, spotifyId: null, yandexMusic: ym, previewUrl: null, artworkUrl: null, bpm: state.draft.bpm, mode: state.draft.mode, genre: state.draft.genre });
+        document.getElementById('spotifyUrlInput').value = ''; document.getElementById('customLinkTitleInput').value = ''; closeMusicSheet(); showToast('Яндекс Музыка прикреплена'); return;
+      }
+      if (!spId) { showToast('Вставьте ссылку Spotify или Яндекс Музыки'); return; }
+      const cleanUrl = `https://open.spotify.com/track/${spId}`; let title = customTitle || 'Трек из Spotify', artworkUrl = null;
+      try { const r = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(cleanUrl)}`); if (r.ok) { const m = await r.json(); if (m.title && !customTitle) title = m.title; if (m.thumbnail_url) artworkUrl = m.thumbnail_url; } } catch (e) {}
+      applyTrackToDraft({ title, url: cleanUrl, spotifyId: spId, yandexMusic: null, previewUrl: null, artworkUrl, bpm: state.draft.bpm, mode: state.draft.mode, genre: state.draft.genre });
+      document.getElementById('spotifyUrlInput').value = ''; document.getElementById('customLinkTitleInput').value = ''; closeMusicSheet(); showToast('Spotify подключён');
+    }
+    function applyTrackToDraft({ title, url, spotifyId, yandexMusic = null, previewUrl, artworkUrl, bpm, mode, genre, customAudioUrl = null }) {
+      Object.assign(state.draft, { songTitle: title, songUrl: url, spotifyId, yandexMusic, previewUrl, artworkUrl, bpm, mode, genre, customAudioUrl });
+      document.getElementById('inputSongBpm').value = bpm; document.getElementById('inputSongMode').value = mode; document.getElementById('inputSongGenre').value = genre;
+      updateSelectedTrackCardUI(); updateCreateLiveUI();
+    }
+    function updateSelectedTrackCardUI() {
+      const d = state.draft;
+      document.getElementById('draftTrackTitle').textContent = d.songTitle || 'Музыка дня';
+      document.getElementById('draftTrackSub').textContent = d.songTitle ? `${d.bpm} BPM · ${d.mode === 'minor' ? 'минор' : 'мажор'}` : 'Spotify, Яндекс Музыка, поиск или файл';
+      const w = document.getElementById('draftTrackArtWrap');
+      if (d.artworkUrl) w.innerHTML = `<img src="${escapeHtml(d.artworkUrl)}" alt="" class="w-full h-full object-cover" />`;
+      else w.innerHTML = '<i data-lucide="music" class="w-4 h-4"></i>';
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    /* ---------------- Life Reel & Calendar ---------------- */
+    let lifeReelRaf = null, lifeReelOpen = false;
+    function stopLifeReel() { if (lifeReelRaf) { cancelAnimationFrame(lifeReelRaf); lifeReelRaf = null; } lifeReelOpen = false; stopAllAudio(); }
+    async function openLifeReel() {
+      if (!state.days.length) return;
+      const modal = document.getElementById('lifeReelModal'); modal.classList.remove('hidden'); modal.classList.add('flex'); setBodyScrollLock(true); lifeReelOpen = true;
+      const sorted = [...state.days].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      document.getElementById('lifeReelSub').textContent = `${sorted.length} дней в одном фильме`;
+      document.getElementById('lifeReelProgress').innerHTML = sorted.map((_, i) => `<div class="h-1 flex-1 rounded-full bg-white/35 overflow-hidden"><div id="reelBar${i}" class="h-full bg-white w-0"></div></div>`).join('');
+      const allMedia = await Promise.all(sorted.map((d) => Promise.all((d.photos || []).map(loadMedia))));
+      const canvas = document.getElementById('lifeReelCanvas'), secPerDay = 3.2, t0 = performance.now();
+      const tick = (now) => {
+        if (!lifeReelOpen) return;
+        const loopT = ((now - t0) / 1000) % (sorted.length * secPerDay), dayIdx = Math.floor(loopT / secPerDay), localT = loopT % secPerDay;
+        drawEditorialMemory(canvas, sorted[dayIdx], localT, allMedia[dayIdx], false);
+        sorted.forEach((_, i) => { const bar = document.getElementById(`reelBar${i}`); if (bar) bar.style.width = i < dayIdx ? '100%' : (i === dayIdx ? `${Math.min(100, (localT / secPerDay) * 100)}%` : '0%'); });
+        lifeReelRaf = requestAnimationFrame(tick);
+      };
+      lifeReelRaf = requestAnimationFrame(tick);
+    }
+    function closeLifeReel() { stopLifeReel(); const m = document.getElementById('lifeReelModal'); m.classList.add('hidden'); m.classList.remove('flex'); setBodyScrollLock(false); }
+
+    function renderCalendar() {
+      const mNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+      document.getElementById('calMonthLabel').textContent = `${mNames[state.calMonth]} ${state.calYear}`;
+      const startOff = (new Date(state.calYear, state.calMonth, 1).getDay() + 6) % 7, dim = new Date(state.calYear, state.calMonth + 1, 0).getDate();
+      const byDate = new Map(); state.days.forEach((d) => { if (d.date) byDate.set(d.date, d); });
+      let html = '';
+      for (let i = 0; i < startOff; i++) html += '<div class="aspect-square"></div>';
+      for (let dn = 1; dn <= dim; dn++) {
+        const iso = `${state.calYear}-${String(state.calMonth + 1).padStart(2, '0')}-${String(dn).padStart(2, '0')}`, e = byDate.get(iso);
+        if (e) {
+          const thumb = e.photos && e.photos[0] && !isVideoSrc(e.photos[0]) ? e.photos[0] : '';
+          html += `<button type="button" data-cal-day="${e.id}" class="cal-entry-btn relative aspect-square rounded-[12px] overflow-hidden press-scale" style="background:${(e.palette && e.palette[0]) || '#4f46e5'}">${thumb ? `<img src="${thumb}" alt="" class="w-full h-full object-cover opacity-85" />` : ''}<span class="absolute inset-0 bg-black/25 flex items-center justify-center text-xs font-bold text-white">${dn}</span></button>`;
+        } else html += `<div class="aspect-square rounded-[12px] ios-fill flex items-center justify-center text-xs ios-muted">${dn}</div>`;
+      }
+      const grid = document.getElementById('calendarGrid'); grid.innerHTML = html;
+      grid.querySelectorAll('.cal-entry-btn').forEach((b) => b.addEventListener('click', () => openDayModal(b.dataset.calDay)));
+      document.getElementById('calendarSavedSection').classList.toggle('hidden', !state.days.length);
+      const list = document.getElementById('calendarSavedList');
+      list.innerHTML = state.days.map((d) => `
+        <button type="button" data-jump-day="${d.id}" class="cal-jump-btn ios-row w-full text-left">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-[10px] overflow-hidden shrink-0 ios-fill">${d.photos && d.photos[0] && !isVideoSrc(d.photos[0]) ? `<img src="${d.photos[0]}" alt="" class="w-full h-full object-cover" />` : ''}</div>
+            <div class="min-w-0"><div class="text-[15px] font-semibold ios-text truncate">${escapeHtml(d.folderTitle)}</div><div class="text-xs ios-muted truncate">${formatDateRu(d.date)}</div></div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 ios-muted shrink-0"></i>
+        </button>
+      `).join('');
+      list.querySelectorAll('.cal-jump-btn').forEach((b) => b.addEventListener('click', () => openDayModal(b.dataset.jumpDay)));
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    /* ---------------- Loops, Views & Modals ---------------- */
+    let modalRafId = null, previewRafId = null;
+    function stopModalLoop() { if (modalRafId) { cancelAnimationFrame(modalRafId); modalRafId = null; } }
+    function stopPreviewLoop() { if (previewRafId) { cancelAnimationFrame(previewRafId); previewRafId = null; } }
+    async function startModalLoop(day) {
+      stopModalLoop(); const c = document.getElementById('modalCanvas'), media = await Promise.all((day.photos || []).map(loadMedia));
+      const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches, t0 = performance.now();
+      const tick = (now) => { if (!state.activeDayId || state.activeDayId !== day.id) return; drawEditorialMemory(c, day, reduced ? 1.4 : (now - t0) / 1000, media, state.compareOriginal); if (!reduced) modalRafId = requestAnimationFrame(tick); };
+      modalRafId = requestAnimationFrame(tick);
+    }
+    async function startPreviewLoop() {
+      stopPreviewLoop(); const c = document.getElementById('previewCanvas'); if (!c || state.view !== 'create') return;
+      const dd = buildDayFromDraft(), media = await Promise.all((dd.photos || []).map(loadMedia));
+      const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches, t0 = performance.now();
+      const tick = (now) => { if (state.view !== 'create') return; drawEditorialMemory(c, buildDayFromDraft(), reduced ? 1.4 : (now - t0) / 1000, media, false); if (!reduced) previewRafId = requestAnimationFrame(tick); };
+      previewRafId = requestAnimationFrame(tick);
+    }
+    function buildDayFromDraft() {
+      const d = state.draft, an = analyzeDayAtmosphere({ text: d.text, bpm: d.bpm, mode: d.mode, genre: d.genre, songTitle: d.songTitle });
+      const title = d.titleManuallyEdited && d.folderTitle.trim() ? d.folderTitle.trim() : generateFolderTitle(d.text);
+      return {
+        id: 'draft-preview', index: state.days.length + 1, date: d.date || new Date().toISOString().slice(0, 10), place: d.place || '',
+        folderTitle: title, text: d.text || '', photos: d.photos,
+        song: { title: d.songTitle || 'Саундтрек дня', url: d.songUrl || '', spotifyId: d.spotifyId || null, yandexMusic: d.yandexMusic || null, previewUrl: d.previewUrl || null, artworkUrl: d.artworkUrl || null, bpm: Number(d.bpm) || 84, mode: d.mode || 'minor', genre: d.genre || 'jazz', customAudioUrl: d.customAudioUrl || null },
+        palette: d.palette, styleId: an.styleId, moodLabel: an.moodLabel, metrics: an.metrics, voiceNoteUrl: d.voiceNoteUrl || null, voiceNoteDuration: d.voiceNoteDuration || '', customFilterIds: [...(d.customFilterIds || [])]
+      };
+    }
+
+    function setView(v) {
+      state.view = v;
+      const isArch = v === 'archive' || v === 'strip';
+      document.getElementById('viewArchive').classList.toggle('hidden', !isArch);
+      document.getElementById('viewCalendar').classList.toggle('hidden', v !== 'calendar');
+      document.getElementById('viewCreate').classList.toggle('hidden', v !== 'create');
+      document.getElementById('viewSystem').classList.toggle('hidden', v !== 'system');
+      const map = { archive: 'navArchive', calendar: 'navCalendar', strip: 'navStrip', system: 'navSystem' };
+      Object.entries(map).forEach(([k, id]) => {
+        const el = document.getElementById(id); if (!el) return;
+        el.style.color = k === v ? 'var(--brand-blue)' : 'var(--ink-3)';
+      });
+      if (v === 'create') { renderComposerCustomFilters(); updateSelectedTrackCardUI(); updateDraftVoiceUI(); updateCreateLiveUI(); startPreviewLoop(); } else stopPreviewLoop();
+      if (isArch) renderArchive();
+      if (v === 'calendar') renderCalendar();
+      if (v === 'system') renderSystemReferences();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderArchive() {
+      const c = state.days.length;
+      const totalMedia = state.days.reduce((sum, d) => sum + ((d.photos && d.photos.length) || 0), 0);
+      document.getElementById('statDaysCount').innerHTML = `${c} <span class="text-[12px] font-normal ios-muted">/ 50</span>`;
+      document.getElementById('statMediaCount').textContent = totalMedia;
+      document.getElementById('openLifeReelBtn').classList.toggle('hidden', c === 0);
+      renderCustomFilterChips();
+      document.getElementById('archiveBrandEmpty').classList.toggle('hidden', c > 0);
+
+      const grid = document.getElementById('archiveGrid'), emptyFilter = document.getElementById('archiveEmptyState');
+      if (c === 0) { grid.innerHTML = ''; emptyFilter.classList.add('hidden'); document.getElementById('stripBanner').classList.add('hidden'); if (window.lucide) window.lucide.createIcons(); return; }
+
+      document.querySelectorAll('.filter-chip').forEach((btn) => {
+        const active = btn.dataset.filter === state.filterStyle;
+        btn.className = active ? 'filter-chip shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold ios-btn-primary transition' : 'filter-chip shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium ios-card ios-sub transition';
+      });
+      const isStrip = state.view === 'strip';
+      document.getElementById('stripBanner').classList.toggle('hidden', !isStrip);
+      grid.className = isStrip ? 'flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar -mx-4 px-4' : 'grid grid-cols-1 sm:grid-cols-2 gap-4';
+
+      const q = state.searchQuery.trim().toLowerCase();
+      const filtered = state.days.filter((d) => { const ms = state.filterStyle === 'all' || (state.filterStyle.startsWith('custom:') ? (d.customFilterIds || []).includes(state.filterStyle.slice(7)) : d.styleId === state.filterStyle); return ms && (!q || d.folderTitle.toLowerCase().includes(q) || d.text.toLowerCase().includes(q) || (d.place || '').toLowerCase().includes(q) || (d.song.title || '').toLowerCase().includes(q)); });
+      if (!filtered.length) { grid.innerHTML = ''; emptyFilter.classList.remove('hidden'); return; }
+      emptyFilter.classList.add('hidden'); grid.innerHTML = '';
+
+      filtered.forEach((day) => {
+        const card = document.createElement('article');
+        card.className = isStrip ? 'snap-start shrink-0 w-[275px] rounded-[20px] overflow-hidden ios-card press-scale cursor-pointer' : 'rounded-[20px] overflow-hidden ios-card press-scale cursor-pointer';
+        card.innerHTML = `<div class="aspect-4-5 w-full ios-fill"><canvas class="archive-card-canvas w-full h-full block" width="960" height="1200"></canvas></div>`;
+        card.addEventListener('click', () => openDayModal(day.id));
+        grid.appendChild(card);
+        Promise.all((day.photos || []).map(loadMedia)).then((m) => drawEditorialMemory(card.querySelector('.archive-card-canvas'), day, 1.4, m, false));
+      });
+    }
+
+    let deleteArmed = false, deleteArmTimer = null;
+    function resetDeleteBtn() {
+      deleteArmed = false; if (deleteArmTimer) { clearTimeout(deleteArmTimer); deleteArmTimer = null; }
+      const b = document.getElementById('deleteDayBtn'), l = document.getElementById('deleteDayLabel');
+      if (b) b.className = 'h-8 px-2.5 rounded-full ios-fill hover:bg-red-500/15 ios-sub hover:text-red-500 text-xs font-semibold flex items-center gap-1 transition';
+      if (l) l.classList.add('hidden');
+    }
+    async function handleDeleteActiveDay() {
+      if (!state.activeDayId) return;
+      if (!deleteArmed) {
+        deleteArmed = true;
+        const b = document.getElementById('deleteDayBtn'), l = document.getElementById('deleteDayLabel');
+        if (b) b.className = 'h-8 px-3 rounded-full bg-red-500 text-white text-xs font-semibold flex items-center gap-1 transition';
+        if (l) l.classList.remove('hidden');
+        deleteArmTimer = setTimeout(resetDeleteBtn, 4000); return;
+      }
+      const idx = state.days.findIndex((d) => d.id === state.activeDayId); if (idx === -1) return;
+      const [removed] = state.days.splice(idx, 1); await saveDaysToStorage(); closeDayModal();
+      if (state.view === 'calendar') renderCalendar(); else renderArchive();
+      showUndoToast(`Удалено: «${removed.folderTitle}»`, async () => { state.days.splice(idx, 0, removed); await saveDaysToStorage(); if (state.view === 'calendar') renderCalendar(); else renderArchive(); });
+    }
+
+    function openDayModal(dayId) {
+      const day = state.days.find((d) => d.id === dayId); if (!day) return;
+      state.activeDayId = dayId; state.modalTab = 'folder'; state.compareOriginal = false;
+      resetDeleteBtn(); stopAllAudio(); stopVoiceover();
+      const style = ART_STYLES[day.styleId] || ART_STYLES.monet;
+      document.getElementById('compareOriginalLabel').textContent = 'Атмосфера · Оригинал';
+      document.getElementById('modalFolderTitle').textContent = day.folderTitle;
+      document.getElementById('modalDateText').textContent = formatDateRu(day.date);
+      document.getElementById('modalMoodBadge').textContent = `${day.moodLabel} · ${style.name}`;
+      document.getElementById('modalDayText').textContent = day.text;
+      const pb = document.getElementById('modalPlaceBadge');
+      if (day.place) { document.getElementById('modalPlaceText').textContent = day.place; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
+      document.getElementById('modalSongTitle').textContent = day.song.title;
+      document.getElementById('modalSongMeta').textContent = `${day.song.bpm} BPM · ${day.song.mode === 'minor' ? 'минор' : 'мажор'}`;
+      const ext = document.getElementById('modalSongExternalLink'); if (day.song.url && day.song.url.startsWith('http')) { ext.href = day.song.url; ext.classList.remove('hidden'); } else ext.classList.add('hidden');
+      document.getElementById('modalYandexLink').href = day.song.yandexMusic ? `https://music.yandex.ru/album/${day.song.yandexMusic.albumId}/track/${day.song.yandexMusic.trackId}` : `https://music.yandex.ru/search?text=${encodeURIComponent(day.song.title || '')}`;
+
+      const vSec = document.getElementById('modalVoiceSection'), vAud = document.getElementById('modalVoiceAudio'), vDur = document.getElementById('modalVoiceDuration');
+      if (day.voiceNoteUrl && vSec && vAud) { vAud.src = day.voiceNoteUrl; if (vDur) vDur.textContent = day.voiceNoteDuration || ''; vSec.classList.remove('hidden'); } else if (vSec) vSec.classList.add('hidden');
+
+      const emb = document.getElementById('spotifyEmbedWrap');
+      if (day.song.spotifyId) { emb.innerHTML = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${encodeURIComponent(day.song.spotifyId)}?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`; emb.classList.remove('hidden'); }
+      else if (day.song.yandexMusic && day.song.yandexMusic.trackId) { emb.innerHTML = `<iframe frameborder="0" style="border:none;width:100%;height:110px;border-radius:12px" src="https://music.yandex.ru/iframe/track/${encodeURIComponent(day.song.yandexMusic.trackId)}/${encodeURIComponent(day.song.yandexMusic.albumId)}"></iframe>`; emb.classList.remove('hidden'); }
+      else { emb.innerHTML = ''; emb.classList.add('hidden'); }
+
+      document.getElementById('modalPaletteDots').innerHTML = (day.palette || []).slice(0, 4).map((hex) => `<span class="w-4 h-4 rounded-full border ios-sep" style="background:${hex}"></span>`).join('');
+      document.getElementById('modalPhotoThumbs').innerHTML = (day.photos || []).map((src, i) => isVideoSrc(src) ? `<div class="w-16 h-12 rounded-[10px] ios-btn-primary text-[10px] flex items-center justify-center">Видео ${i + 1}</div>` : `<img src="${src}" alt="" class="w-16 h-12 object-cover rounded-[10px]" />`).join('');
+      const words = day.text.trim().split(/\s+/).filter(Boolean).length;
+      document.getElementById('modalFolderTree').innerHTML = `<div class="font-semibold ios-text">📁 ${escapeHtml(day.folderTitle)}/</div><div class="pl-3">├── entry.txt (${words} слов)</div><div class="pl-3">├── media/ (${day.photos.length} / 5)</div><div class="pl-3">└── soundtrack (${escapeHtml(day.song.title)})</div>`;
+
+      document.getElementById('explainArtTitle').textContent = `${style.name} — ${style.movement}`;
+      document.getElementById('explainArtReason').textContent = style.why;
+      document.getElementById('explainCausalCards').innerHTML = buildExplainability(day).map((c) => `<div class="ios-card rounded-[14px] p-3 flex items-start gap-3"><div class="w-7 h-7 rounded-[8px] ios-fill flex items-center justify-center shrink-0 ios-text"><i data-lucide="${c.icon}" class="w-3.5 h-3.5"></i></div><div><div class="text-xs font-semibold ios-text">${c.title}</div><p class="text-xs ios-sub mt-0.5">${c.body}</p></div></div>`).join('');
+      document.getElementById('explainMeters').innerHTML = [{ l: 'Теплота', v: day.metrics.warmth, c: '#f59e0b' }, { l: 'Энергия', v: day.metrics.energy, c: '#4f46e5' }, { l: 'Собранность', v: day.metrics.focus, c: '#6366f1' }, { l: 'Воздух', v: day.metrics.air, c: '#64748b' }].map((m) => `<div class="space-y-1"><div class="flex justify-between text-xs"><span class="ios-sub">${m.l}</span><span class="font-mono-num ios-text">${m.v}%</span></div><div class="h-1.5 rounded-full ios-fill overflow-hidden"><div class="h-full rounded-full" style="width:${m.v}%;background:${m.c}"></div></div></div>`).join('');
+      document.getElementById('modalSlideDots').innerHTML = day.photos.length > 1 ? day.photos.map(() => '<span class="w-1.5 h-1.5 rounded-full bg-white/85"></span>').join('') : '';
+
+      updateModalTabs();
+      const modal = document.getElementById('dayModal'); modal.classList.remove('hidden'); modal.classList.add('flex'); setBodyScrollLock(true);
+      startModalLoop(day); if (window.lucide) window.lucide.createIcons();
+    }
+    function closeDayModal() { resetDeleteBtn(); stopModalLoop(); stopAllAudio(); stopVoiceover(); state.activeDayId = null; document.getElementById('spotifyEmbedWrap').innerHTML = ''; const m = document.getElementById('dayModal'); m.classList.add('hidden'); m.classList.remove('flex'); setBodyScrollLock(false); }
+    function updateModalTabs() {
+      const isF = state.modalTab === 'folder';
+      document.getElementById('panelFolderContent').classList.toggle('hidden', !isF);
+      document.getElementById('panelExplainLogic').classList.toggle('hidden', isF);
+      document.getElementById('tabFolderContent').className = isF ? 'modal-subtab py-1.5 rounded-[9px] text-xs font-semibold ios-card ios-text transition' : 'modal-subtab py-1.5 rounded-[9px] text-xs font-medium ios-sub transition';
+      document.getElementById('tabExplainLogic').className = !isF ? 'modal-subtab py-1.5 rounded-[9px] text-xs font-semibold ios-card ios-text transition' : 'modal-subtab py-1.5 rounded-[9px] text-xs font-medium ios-sub transition';
+    }
+
+    function renderUploadedPhotoThumbs() {
+      const wrap = document.getElementById('uploadedPhotosPreview'), count = state.draft.photos.length;
+      document.getElementById('photoUploadBtnText').textContent = count >= 5 ? 'Лимит 5/5' : (count ? 'Ещё' : 'Фото / Видео');
+      const badge = document.getElementById('mediaLimitBadge');
+      if (badge) { badge.textContent = `${count} / 5 файлов`; badge.style.color = count >= 5 ? '#ff3b30' : ''; }
+      wrap.innerHTML = state.draft.photos.map((src, idx) => `<div class="relative shrink-0 w-10 h-10 rounded-[10px] overflow-hidden ios-fill">${isVideoSrc(src) ? '<div class="w-full h-full flex items-center justify-center text-[9px] font-bold ios-text">VID</div>' : `<img src="${src}" alt="" class="w-full h-full object-cover" />`}<button type="button" data-remove-idx="${idx}" class="remove-photo-btn absolute top-0 right-0 w-4 h-4 bg-black/75 text-white text-[10px] flex items-center justify-center rounded-bl">×</button></div>`).join('');
+      wrap.querySelectorAll('.remove-photo-btn').forEach((b) => b.addEventListener('click', async () => { state.draft.photos.splice(Number(b.dataset.removeIdx), 1); if (state.draft.photos.length) state.draft.palette = await extractPaletteFromMedia(state.draft.photos[0]); renderUploadedPhotoThumbs(); updateCreateLiveUI(); startPreviewLoop(); }));
+    }
+    function updateCreateLiveUI() {
+      const dd = buildDayFromDraft(), style = ART_STYLES[dd.styleId];
+      document.getElementById('bpmValueLabel').textContent = state.draft.bpm;
+      document.getElementById('textCharCount').textContent = state.draft.text.length;
+      if (!state.draft.titleManuallyEdited) document.getElementById('inputFolderTitle').value = state.draft.text.trim() ? dd.folderTitle : '';
+      document.getElementById('previewStyleHint').textContent = `${style.name} · ${dd.moodLabel}`;
+    }
+    function renderSystemReferences() {
+      document.getElementById('artReferencesGrid').innerHTML = Object.values(ART_STYLES).map((s) => `<div class="ios-card rounded-[18px] p-4 space-y-1.5"><div class="flex items-center justify-between"><h2 class="text-[16px] font-semibold ios-text">${s.name}</h2><span class="w-3 h-3 rounded-full" style="background:${s.accent}"></span></div><div class="text-xs font-medium ios-muted">${s.movement}</div><p class="text-[13px] ios-sub leading-relaxed">${s.trigger} ${s.why}</p></div>`).join('');
+    }
+    function showToast(msg) { const c = document.getElementById('toastContainer'), el = document.createElement('div'); el.className = 'sheet-up pointer-events-auto px-4 py-2.5 rounded-full ios-btn-primary text-xs font-semibold shadow-xl'; el.textContent = msg; c.appendChild(el); setTimeout(() => el.remove(), 2800); }
+    function showUndoToast(msg, onUndo) { const c = document.getElementById('toastContainer'), el = document.createElement('div'); el.className = 'sheet-up pointer-events-auto pl-4 pr-2 py-2 rounded-full ios-btn-primary text-xs font-semibold shadow-xl flex items-center gap-3'; el.innerHTML = `<span>${escapeHtml(msg)}</span><button type="button" class="px-3 py-1 rounded-full bg-[#4f46e5] text-white">Отменить</button>`; el.querySelector('button').addEventListener('click', () => { el.remove(); onUndo(); }); c.appendChild(el); setTimeout(() => { if (el.parentNode) el.remove(); }, 5000); }
+    function escapeHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    function handleMediaFiles(fileList) {
+      const rem = 5 - state.draft.photos.length; if (rem <= 0) { showToast('Лимит: максимум 5 файлов в дне'); return; }
+      const files = Array.from(fileList || []).filter((f) => f.type.startsWith('image/') || f.type.startsWith('video/')).slice(0, rem); if (!files.length) return;
+      Promise.all(files.map((f) => new Promise((res) => { if (f.type.startsWith('video/')) res(URL.createObjectURL(f) + '#video'); else { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); } }))).then(async (urls) => {
+        state.draft.photos = [...state.draft.photos, ...urls].slice(0, 5);
+        state.draft.palette = await extractPaletteFromMedia(state.draft.photos[0]);
+        renderUploadedPhotoThumbs(); updateCreateLiveUI(); startPreviewLoop(); showToast(`Загружено: ${state.draft.photos.length} / 5`);
+      });
+    }
+
+    async function submitCreateDay(e) {
+      if (e) e.preventDefault();
+      if (!state.draft.text.trim()) { showToast('Напишите пару строк о дне'); return; }
+      if (!state.draft.photos.length) { showToast('Добавьте хотя бы 1 фото или видео'); return; }
+      if (state.days.length >= 50) { showToast('Достигнут лимит архива: 50 дней'); return; }
+      const newDay = buildDayFromDraft(); newDay.id = 'day-' + Date.now(); newDay.index = state.days.length + 1;
+      state.days.unshift(newDay); await saveDaysToStorage();
+      Object.assign(state.draft, { text: '', place: '', folderTitle: '', titleManuallyEdited: false, photos: [], songTitle: '', songUrl: '', spotifyId: null, yandexMusic: null, previewUrl: null, artworkUrl: null, customAudioUrl: null, voiceNoteUrl: null, voiceNoteDuration: '', customFilterIds: [] });
+      document.getElementById('inputDayText').value = ''; document.getElementById('inputDayPlace').value = ''; document.getElementById('inputFolderTitle').value = '';
+      renderUploadedPhotoThumbs(); updateSelectedTrackCardUI(); updateDraftVoiceUI();
+      setView('archive'); showToast('День сохранён'); setTimeout(() => openDayModal(newDay.id), 200);
+    }
+
+    async function initApp() {
+      try { applyTheme(localStorage.getItem(THEME_KEY) || 'light'); } catch (e) { applyTheme('light'); }
+      try { document.getElementById('todayDateLabel').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) {}
+      document.getElementById('inputDayDate').value = state.draft.date;
+
+      document.getElementById('authTabLogin').addEventListener('click', () => setAuthMode('login'));
+      document.getElementById('authTabRegister').addEventListener('click', () => setAuthMode('register'));
+      document.getElementById('authForm').addEventListener('submit', handleAuthSubmit);
+      document.getElementById('authGuestBtn').addEventListener('click', () => enterAppAsUser({ id: 'guest', name: 'Гость', email: 'Локальный дневник' }));
+      document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+      document.getElementById('authThemeToggleBtn').addEventListener('click', toggleTheme);
+
+      const bind = (id, v) => { const el = document.getElementById(id); if (el) el.addEventListener('click', () => setView(v)); };
+      bind('brandHomeBtn', 'archive'); bind('navArchive', 'archive'); bind('navCalendar', 'calendar'); bind('navCreate', 'create'); bind('navStrip', 'strip'); bind('navSystem', 'system');
+      bind('emptyStartWritingBtn', 'create'); bind('backToGridBtn', 'archive'); bind('cancelCreateBtn', 'archive');
+
+      document.getElementById('openProfileBtn').addEventListener('click', openProfileSheet);
+      document.getElementById('closeProfileBtn').addEventListener('click', closeProfileSheet);
+      document.getElementById('profileSheet').addEventListener('click', (e) => { if (e.target.id === 'profileSheet') closeProfileSheet(); });
+      document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+      document.getElementById('exportBackupBtn').addEventListener('click', () => { const u = URL.createObjectURL(new Blob([JSON.stringify({ app: 'Aura', user: state.user, days: state.days }, null, 2)], { type: 'application/json' })); const a = document.createElement('a'); a.href = u; a.download = 'aura_backup.json'; a.click(); setTimeout(() => URL.revokeObjectURL(u), 3000); showToast('Копия сохранена'); });
+      document.getElementById('importBackupInput').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = async () => { try { const d = JSON.parse(r.result); if (Array.isArray(d.days)) { state.days = d.days; await saveDaysToStorage(); closeProfileSheet(); renderArchive(); showToast(`Импортировано: ${d.days.length}`); } } catch (err) { showToast('Неверный файл'); } }; r.readAsText(f); });
+
+      document.getElementById('openCustomFilterBtn').addEventListener('click', openCustomFilterModal);
+      document.getElementById('composerAddFilterBtn').addEventListener('click', openCustomFilterModal);
+      document.getElementById('closeCustomFilterBtn').addEventListener('click', closeCustomFilterModal);
+      document.getElementById('customFilterModal').addEventListener('click', (e) => { if (e.target.id === 'customFilterModal') closeCustomFilterModal(); });
+      document.querySelectorAll('.f-color-btn').forEach((b) => b.addEventListener('click', () => {
+        state.newFilterColor = b.dataset.color;
+        document.querySelectorAll('.f-color-btn').forEach((x) => x.classList.remove('ring-2', 'ring-offset-2', 'ring-[#4f46e5]'));
+        b.classList.add('ring-2', 'ring-offset-2', 'ring-[#4f46e5]');
+      }));
+      document.getElementById('customFilterForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('newFilterNameInput').value.trim();
+        if (!name) return;
+        const newF = { id: 'cf_' + Date.now(), name, color: state.newFilterColor || '#f59e0b' };
+        state.customFilters.push(newF);
+        if (state.view === 'create') state.draft.customFilterIds.push(newF.id);
+        saveCustomFilters();
+        document.getElementById('newFilterNameInput').value = '';
+        renderExistingCustomFilters(); renderCustomFilterChips(); renderComposerCustomFilters();
+        showToast(`Фильтр «${name}» добавлен`);
+      });
+      document.getElementById('openTutorialBtn').addEventListener('click', () => openTutorial(0));
+      document.getElementById('emptyOpenTutorialBtn').addEventListener('click', () => openTutorial(0));
+      document.getElementById('profileTutorialBtn').addEventListener('click', () => { closeProfileSheet(); openTutorial(0); });
+      document.getElementById('closeTutorialBtn').addEventListener('click', () => closeTutorial(false));
+      document.getElementById('tutorialModal').addEventListener('click', (e) => { if (e.target.id === 'tutorialModal') closeTutorial(false); });
+      document.getElementById('tutPrevBtn').addEventListener('click', () => { if (tutorialStepIdx > 0) { tutorialStepIdx--; renderTutorialStep(); } });
+      document.getElementById('tutNextBtn').addEventListener('click', () => { if (tutorialStepIdx < TUTORIAL_STEPS.length - 1) { tutorialStepIdx++; renderTutorialStep(); } else closeTutorial(state.days.length === 0); });
+
+      document.getElementById('calPrevMonthBtn').addEventListener('click', () => { state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderCalendar(); });
+      document.getElementById('calNextMonthBtn').addEventListener('click', () => { state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderCalendar(); });
+
+      document.getElementById('openLifeReelBtn').addEventListener('click', openLifeReel);
+      document.getElementById('closeLifeReelBtn').addEventListener('click', closeLifeReel);
+      document.getElementById('lifeReelModal').addEventListener('click', (e) => { if (e.target.id === 'lifeReelModal') closeLifeReel(); });
+      document.getElementById('toggleReelMusicBtn').addEventListener('click', () => { if (isMusicPlaying) stopAllAudio(); else if (state.days.length) { toggleMusicForDay(state.days[0]); document.getElementById('reelMusicLabel').textContent = 'Пауза'; } });
+      document.getElementById('recordLifeReelBtn').addEventListener('click', () => { const l = document.getElementById('recordReelLabel'); recordCanvasVideo(document.getElementById('lifeReelCanvas'), Math.min(14000, Math.max(4000, state.days.length * 3200)), 'Aura_Reel.webm', (s) => { l.textContent = `${s}с...`; }, () => { l.textContent = 'Скачать видео'; }); });
+
+      document.getElementById('searchToggleBtn').addEventListener('click', () => { const w = document.getElementById('searchBarWrap'); w.classList.toggle('hidden'); if (!w.classList.contains('hidden')) document.getElementById('archiveSearchInput').focus(); });
+      document.getElementById('archiveSearchInput').addEventListener('input', (e) => { state.searchQuery = e.target.value; if (state.view !== 'archive' && state.view !== 'strip') setView('archive'); else renderArchive(); });
+      document.querySelectorAll('.filter-chip').forEach((b) => b.addEventListener('click', () => { state.filterStyle = b.dataset.filter; renderArchive(); }));
+      document.getElementById('clearFiltersBtn').addEventListener('click', () => { state.filterStyle = 'all'; state.searchQuery = ''; document.getElementById('archiveSearchInput').value = ''; renderArchive(); });
+
+      document.getElementById('closeModalBtn').addEventListener('click', closeDayModal);
+      document.getElementById('deleteDayBtn').addEventListener('click', handleDeleteActiveDay);
+      document.getElementById('dayModal').addEventListener('click', (e) => { if (e.target.id === 'dayModal') closeDayModal(); });
+      document.getElementById('tabFolderContent').addEventListener('click', () => { state.modalTab = 'folder'; updateModalTabs(); });
+      document.getElementById('tabExplainLogic').addEventListener('click', () => { state.modalTab = 'explain'; updateModalTabs(); });
+      document.getElementById('compareOriginalBtn').addEventListener('click', () => { state.compareOriginal = !state.compareOriginal; document.getElementById('compareOriginalLabel').textContent = state.compareOriginal ? 'Оригинал · Атмосфера' : 'Атмосфера · Оригинал'; });
+      document.getElementById('toggleMusicBtn').addEventListener('click', () => { const d = state.days.find((x) => x.id === state.activeDayId); if (d) toggleMusicForDay(d); });
+      document.getElementById('exportPngBtn').addEventListener('click', () => { const c = document.getElementById('modalCanvas'), d = state.days.find((x) => x.id === state.activeDayId); if (!c || !d) return; const a = document.createElement('a'); a.download = `Aura_${d.index}.png`; a.href = c.toDataURL('image/png'); a.click(); showToast('PNG сохранён'); });
+      document.getElementById('exportVideoBtn').addEventListener('click', () => { const d = state.days.find((x) => x.id === state.activeDayId), l = document.getElementById('exportVideoLabel'); recordCanvasVideo(document.getElementById('modalCanvas'), 6000, `Aura_${d ? d.index : 'day'}.webm`, (s) => { l.textContent = `${s}с...`; }, () => { l.textContent = 'Видео'; }); });
+
+      document.getElementById('openMusicSheetBtn').addEventListener('click', openMusicSheet);
+      document.getElementById('closeMusicSheetBtn').addEventListener('click', closeMusicSheet);
+      document.getElementById('musicSheet').addEventListener('click', (e) => { if (e.target.id === 'musicSheet') closeMusicSheet(); });
+      document.getElementById('musicTabSearch').addEventListener('click', () => setMusicSheetTab('search'));
+      document.getElementById('musicTabSpotifyLink').addEventListener('click', () => setMusicSheetTab('link'));
+      document.getElementById('musicTabUpload').addEventListener('click', () => setMusicSheetTab('upload'));
+      document.getElementById('runMusicSearchBtn').addEventListener('click', runLiveMusicSearch);
+      document.getElementById('liveMusicSearchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); runLiveMusicSearch(); } });
+      document.getElementById('applySpotifyLinkBtn').addEventListener('click', applySpotifyLink);
+      document.getElementById('inputAudioFile').addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0]; if (!f) return;
+        if (f.size > 15 * 1024 * 1024) { showToast('Лимит аудио: до 15 МБ'); return; }
+        applyTrackToDraft({ title: f.name.replace(/\.[^/.]+$/, ''), url: '', spotifyId: null, yandexMusic: null, previewUrl: null, artworkUrl: null, bpm: state.draft.bpm, mode: state.draft.mode, genre: state.draft.genre, customAudioUrl: URL.createObjectURL(f) });
+        closeMusicSheet(); showToast('Аудио добавлено');
+      });
+
+      document.getElementById('recordVoiceBtn').addEventListener('click', toggleMicRecording);
+      document.getElementById('deleteDraftVoiceBtn').addEventListener('click', () => { state.draft.voiceNoteUrl = null; state.draft.voiceNoteDuration = ''; updateDraftVoiceUI(); showToast('Голос удалён'); });
+      document.getElementById('toggleManualMusicBtn').addEventListener('click', () => document.getElementById('manualMusicControls').classList.toggle('hidden'));
+      document.getElementById('inputDayText').addEventListener('input', (e) => { state.draft.text = e.target.value; updateCreateLiveUI(); });
+      document.getElementById('inputDayDate').addEventListener('change', (e) => { state.draft.date = e.target.value; });
+      document.getElementById('inputDayPlace').addEventListener('input', (e) => { state.draft.place = e.target.value; });
+      document.getElementById('inputFolderTitle').addEventListener('input', (e) => { state.draft.folderTitle = e.target.value; state.draft.titleManuallyEdited = e.target.value.trim().length > 0; });
+      document.getElementById('regenTitleBtn').addEventListener('click', () => { state.draft.titleManuallyEdited = false; updateCreateLiveUI(); });
+      document.getElementById('inputSongBpm').addEventListener('input', (e) => { state.draft.bpm = Number(e.target.value); updateSelectedTrackCardUI(); updateCreateLiveUI(); });
+      document.getElementById('inputSongMode').addEventListener('change', (e) => { state.draft.mode = e.target.value; updateSelectedTrackCardUI(); updateCreateLiveUI(); });
+      document.getElementById('inputSongGenre').addEventListener('change', (e) => { state.draft.genre = e.target.value; updateCreateLiveUI(); });
+      document.getElementById('photoUploadTrigger').addEventListener('click', () => document.getElementById('inputPhotoFiles').click());
+      document.getElementById('inputPhotoFiles').addEventListener('change', (e) => handleMediaFiles(e.target.files));
+      document.getElementById('createDayForm').addEventListener('submit', submitCreateDay);
+      document.getElementById('topSaveDayBtn').addEventListener('click', submitCreateDay);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (!document.getElementById('customFilterModal').classList.contains('hidden')) closeCustomFilterModal();
+          else if (!document.getElementById('tutorialModal').classList.contains('hidden')) closeTutorial(false);
+          else if (!document.getElementById('musicSheet').classList.contains('hidden')) closeMusicSheet();
+          else if (!document.getElementById('profileSheet').classList.contains('hidden')) closeProfileSheet();
+          else if (lifeReelOpen) closeLifeReel();
+          else if (state.activeDayId) closeDayModal();
+        }
+      });
+
+      const existing = loadSession();
+      if (existing) await enterAppAsUser(existing);
+      else { setAuthMode('login'); if (window.lucide) window.lucide.createIcons(); }
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
